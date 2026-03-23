@@ -5,7 +5,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kunchenguid/axg.git",
+    "url": "https://github.com/kunchenguid/axi.git",
     "directory": "gh-axi"
   },
   "keywords": [
