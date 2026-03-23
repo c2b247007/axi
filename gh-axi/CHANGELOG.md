@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/kunchenguid/axi/compare/v0.1.1...v0.1.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* **README:** update search description ([bc79a50](https://github.com/kunchenguid/axi/commit/bc79a504ea6d85f71cc5c738d47af047184941e4))
+
 ## [0.1.1](https://github.com/kunchenguid/axi/compare/v0.1.0...v0.1.1) (2026-03-23)
 
 
