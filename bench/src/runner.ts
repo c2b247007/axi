@@ -11,7 +11,7 @@
  */
 
 import { execSync, type ExecSyncOptionsWithStringEncoding } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import type { RunSpec, RunResult, ConditionDef, TaskDef, AgentBackend } from "./types.js";
@@ -34,62 +34,72 @@ export function runOne(
   // 2. Set up workspace: shallow-clone openclaw/openclaw so the agent runs
   //    inside a real repo with git remotes.
   const workspaceDir = join(artifactDir, "workspace");
-  if (!existsSync(join(workspaceDir, ".git"))) {
-    console.log("  Cloning openclaw/openclaw (shallow)...");
-    execSync(`git clone --depth 1 ${REPO_URL} ${workspaceDir}`, {
-      stdio: "pipe",
-    });
+
+  try {
+    if (!existsSync(join(workspaceDir, ".git"))) {
+      console.log("  Cloning openclaw/openclaw (shallow)...");
+      execSync(`git clone --depth 1 ${REPO_URL} ${workspaceDir}`, {
+        stdio: "pipe",
+      });
+    }
+    // Drop AGENTS.md (for codex) and CLAUDE.md (for claude) on top of the clone
+    writeFileSync(join(workspaceDir, "AGENTS.md"), condition.agents_md);
+    writeFileSync(join(workspaceDir, "CLAUDE.md"), condition.agents_md);
+
+    // Copy gh-code wrapper library into workspace for mcp_with_code_mode condition
+    if (spec.condition === "mcp-with-code-mode") {
+      const ghCodeSrc = join(BENCH_ROOT, "lib", "gh-code");
+      const ghCodeDst = join(workspaceDir, "gh-code");
+      execSync(`cp -r ${ghCodeSrc} ${ghCodeDst}`, { stdio: "pipe" });
+    }
+
+    const agent = spec.agent ?? "codex";
+
+    // 3. Run agent
+    const { agentOutput, wallClockSeconds } = runAgent(spec, condition, task, artifactDir, workspaceDir);
+
+    // Save raw output
+    writeFileSync(join(artifactDir, "agent_output.txt"), agentOutput);
+
+    // 4. Parse usage
+    const usage = agent === "claude"
+      ? parseClaudeJsonl(agentOutput, { model: spec.model, wallClockSeconds })
+      : parseCodexJsonl(agentOutput, { model: spec.model, wallClockSeconds });
+
+    // Extract final text output for the result record
+    const finalOutput = agent === "claude"
+      ? extractClaudeFinalOutput(agentOutput)
+      : extractFinalOutput(agentOutput);
+
+    // 5. Grade — pass raw JSONL so the judge sees the full trajectory
+    const gradeResult = grade(task.grading, task.prompt, agentOutput, agent, artifactDir);
+    writeFileSync(join(artifactDir, "grade.json"), JSON.stringify(gradeResult, null, 2));
+
+    // 6. Build result
+    const result: RunResult = {
+      condition: spec.condition,
+      task: spec.task,
+      run: spec.run,
+      model: spec.model,
+      timestamp: new Date().toISOString(),
+      usage,
+      grade: gradeResult,
+      agent_output: finalOutput.slice(0, 2000), // Truncate for JSONL
+    };
+
+    // 7. Append to results.jsonl
+    const resultsJsonl = join(RESULTS_DIR, "results.jsonl");
+    appendFileSync(resultsJsonl, JSON.stringify(result) + "\n");
+
+    return result;
+  } finally {
+    // Always remove workspace to avoid leaving massive cloned repos on disk.
+    // The workspace is only needed during agent execution and grading; all
+    // useful artifacts (agent_output.txt, grade.json, etc.) are saved outside it.
+    if (existsSync(workspaceDir)) {
+      rmSync(workspaceDir, { recursive: true, force: true });
+    }
   }
-  // Drop AGENTS.md (for codex) and CLAUDE.md (for claude) on top of the clone
-  writeFileSync(join(workspaceDir, "AGENTS.md"), condition.agents_md);
-  writeFileSync(join(workspaceDir, "CLAUDE.md"), condition.agents_md);
-
-  // Copy gh-code wrapper library into workspace for mcp_with_code_mode condition
-  if (spec.condition === "mcp-with-code-mode") {
-    const ghCodeSrc = join(BENCH_ROOT, "lib", "gh-code");
-    const ghCodeDst = join(workspaceDir, "gh-code");
-    execSync(`cp -r ${ghCodeSrc} ${ghCodeDst}`, { stdio: "pipe" });
-  }
-
-  const agent = spec.agent ?? "codex";
-
-  // 3. Run agent
-  const { agentOutput, wallClockSeconds } = runAgent(spec, condition, task, artifactDir, workspaceDir);
-
-  // Save raw output
-  writeFileSync(join(artifactDir, "agent_output.txt"), agentOutput);
-
-  // 4. Parse usage
-  const usage = agent === "claude"
-    ? parseClaudeJsonl(agentOutput, { model: spec.model, wallClockSeconds })
-    : parseCodexJsonl(agentOutput, { model: spec.model, wallClockSeconds });
-
-  // Extract final text output for the result record
-  const finalOutput = agent === "claude"
-    ? extractClaudeFinalOutput(agentOutput)
-    : extractFinalOutput(agentOutput);
-
-  // 5. Grade — pass raw JSONL so the judge sees the full trajectory
-  const gradeResult = grade(task.grading, task.prompt, agentOutput, agent, artifactDir);
-  writeFileSync(join(artifactDir, "grade.json"), JSON.stringify(gradeResult, null, 2));
-
-  // 6. Build result
-  const result: RunResult = {
-    condition: spec.condition,
-    task: spec.task,
-    run: spec.run,
-    model: spec.model,
-    timestamp: new Date().toISOString(),
-    usage,
-    grade: gradeResult,
-    agent_output: finalOutput.slice(0, 2000), // Truncate for JSONL
-  };
-
-  // 7. Append to results.jsonl
-  const resultsJsonl = join(RESULTS_DIR, "results.jsonl");
-  appendFileSync(resultsJsonl, JSON.stringify(result) + "\n");
-
-  return result;
 }
 
 /** Extract the agent's final text output from Codex JSONL stream. */
