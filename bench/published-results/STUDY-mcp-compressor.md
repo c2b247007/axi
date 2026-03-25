@@ -171,6 +171,63 @@ The tools _do_ exist in the underlying server — the agent just never successfu
 
 This pattern — **meta-layer confusion causing discovery failure** — is the dominant failure mode across all compressed conditions. The agent has to reason about two APIs simultaneously (wrapper interface + underlying tool names) and frequently confuses which layer it's operating at.
 
+## CLI Mode Failure Analysis
+
+CLI mode eliminates the wrapper confusion problem (no `invoke_tool` layer), but introduces its own failure patterns. We analyzed trajectories from all failed `mcp-compressed-cli` runs and identified five recurring patterns:
+
+### Pattern 1: CLI flag guessing (4 of 5 failed tasks)
+
+The agent assumes `gh` CLI conventions but the compressor auto-generates flags from MCP schema parameter names, which don't match:
+
+| Agent guessed       | Correct flag              | Task                 |
+| ------------------- | ------------------------- | -------------------- |
+| `--label bug`       | `--labels bug`            | issue_then_comments  |
+| `--include-comments`| `--method get_comments`   | issue_then_comments  |
+| `--state merged`    | `--query "is:merged"`     | weekly_catchup       |
+| `--limit 5`         | `--perPage 5`             | issue_then_comments  |
+
+Each bad guess costs a full turn (error → read error → retry with corrected flag). On multi-step tasks this compounds: the agent spends 2-3 turns on flag discovery before doing any actual work.
+
+### Pattern 2: Premature surrender (3 of 5 failed tasks)
+
+When the `github` CLI lacks a subcommand, the agent gives up entirely instead of trying alternatives:
+
+**`run_then_jobs`**: Agent runs `github --help`, sees no workflow/run subcommands, and immediately concludes: *"The `github` CLI has no `list-workflow-runs` or equivalent command."* It also fabricates a constraint — *"CLAUDE.md prohibits `gh`/`curl`"* — that doesn't exist in the actual instructions. The workflow run tools _do_ exist in the underlying MCP server but aren't exposed through the CLI bridge.
+
+**`list_labels`**: Agent finds only `get-label` (singular, requires `--name`). Tries extracting labels from `list-issues` output but issue listings don't include labels. Gives up without trying `issue-read` with alternate methods, `search-issues` with label filters, or `gh`/`curl`.
+
+### Pattern 3: Shallow data extraction from paginated responses (2 of 5 failed tasks)
+
+The CLI bridge returns paginated output with metadata, but the agent uses `grep` for extraction and misses structured fields:
+
+**`weekly_catchup`**: Agent counts open issues by running `github list-issues ... | grep -c "number:"` and gets **30** — the page size. The same response includes `totalCount: 8700+` in its pagination metadata, but the agent's grep-based extraction misses it entirely. Reported "30 open issues" instead of ~8,700.
+
+### Pattern 4: Missing tool surface (2 of 5 failed tasks)
+
+The GitHub Copilot MCP server doesn't expose certain endpoints through the compressor's CLI bridge:
+
+- `run_then_jobs` (0/5): No workflow run or job subcommands
+- `list_labels` (0/5): No `list-labels` subcommand, only `get-label` (singular)
+
+These are the same endpoints that challenge all compressed conditions, but in CLI mode the gap is immediately visible (missing from `--help` output) rather than requiring failed `invoke_tool` calls to discover.
+
+### Pattern 5: Over-extending past the correct answer (1 of 5 failed tasks)
+
+**`issue_then_comments`**: Agent correctly finds issue #54253 (most recent open bug) and correctly determines it has no comments. This is the right answer. But instead of stopping, the agent searches for a _different_ bug issue that does have comments, finds #53853, and presents a muddled two-part response. The judge grades this as incorrect — the task asked for the most recent bug issue, not one with comments.
+
+### Summary: CLI mode vs wrapper mode failure patterns
+
+| Failure pattern               | Wrapper mode          | CLI mode                |
+| ----------------------------- | --------------------- | ----------------------- |
+| Meta-layer confusion          | Dominant (4/5 tasks)  | Eliminated              |
+| CLI flag guessing             | N/A                   | Dominant (4/5 tasks)    |
+| Premature surrender           | Present               | Present (3/5 tasks)     |
+| Shallow data extraction       | Rare                  | Present (2/5 tasks)     |
+| Missing tool surface          | Present               | Present (2/5 tasks)     |
+| Over-extending past answer    | Rare                  | Present (1/5 tasks)     |
+
+CLI mode trades the wrapper's meta-layer confusion for a different problem: non-standard CLI flag conventions that conflict with the agent's strong prior on `gh`. Both modes share the same reliability ceiling (~71%) because the underlying bottleneck — tool surface gaps and the need to discover parameter formats through trial and error — is the same regardless of invocation method.
+
 ## Methodology
 
 - Same as [baseline study](https://axi.md): fresh shallow clone, Claude agent, LLM judge
