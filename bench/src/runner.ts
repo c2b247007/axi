@@ -188,7 +188,7 @@ function runAgent(
       }
     } else if (condition.mcp_compressor) {
       const ghToken = process.env.GH_TOKEN;
-      const { level, server_name } = condition.mcp_compressor;
+      const { level, server_name, cli_mode } = condition.mcp_compressor;
       const compressorArgs = [
         "mcp-compressor",
         "https://api.githubcopilot.com/mcp/",
@@ -197,6 +197,9 @@ function runAgent(
       ];
       if (server_name) {
         compressorArgs.push("--server-name", server_name);
+      }
+      if (cli_mode) {
+        compressorArgs.push("--cli-mode");
       }
       const mcpConfig = {
         mcpServers: {
@@ -209,7 +212,7 @@ function runAgent(
       const mcpConfigPath = join(artifactDir, ".mcp-config.json");
       writeFileSync(mcpConfigPath, JSON.stringify(mcpConfig));
       mcpArgs.push("--mcp-config", mcpConfigPath);
-      // Only 2–3 wrapper tools, no need for ToolSearch discovery
+      // Only wrapper/help tools, no need for ToolSearch discovery
       mcpArgs.push("--disallowedTools", "ToolSearch");
     }
 

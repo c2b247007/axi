@@ -4,7 +4,7 @@
 
 This study extends the [baseline AXI benchmark](https://axi.md) by adding [mcp-compressor](https://github.com/atlassian-labs/mcp-compressor/) as a new interface category. MCP-compressor is a proxy that replaces N MCP tools with 2-3 wrapper tools (`github_list_tools`, `github_get_tool_schema`, `github_invoke_tool`), compressing tool schemas to reduce upfront token usage.
 
-We tested all four compression levels (`low`, `medium`, `high`, `max`), which vary how much tool description is visible upfront:
+We tested all four compression levels (`low`, `medium`, `high`, `max`) plus the new **CLI mode** (`--cli-mode`), which replaces MCP tool calling entirely with a generated shell script:
 
 | Level    | What the agent sees upfront                                |
 | -------- | ---------------------------------------------------------- |
@@ -12,14 +12,15 @@ We tested all four compression levels (`low`, `medium`, `high`, `max`), which va
 | `medium` | First-sentence descriptions only                           |
 | `high`   | Only tool/parameter names, no descriptions                 |
 | `max`    | Nothing loaded — must call `list_tools` first              |
+| `cli`    | One MCP help tool + `github` CLI via bash                  |
 
 **Agent**: Claude Sonnet 4.6 (`claude-sonnet-4-6`)
 **Judge**: Claude Sonnet 4.6
 **Repeats**: 5 per condition x task
-**Total runs**: 340 (4 conditions x 17 tasks x 5 repeats)
+**Total runs**: 425 (5 conditions x 17 tasks x 5 repeats)
 **Date**: 2026-03-24
 
-## Results: All 9 Conditions Compared
+## Results: All 10 Conditions Compared
 
 Combined with the 5 baseline conditions (425 runs from STUDY.md), sorted by success rate:
 
@@ -32,6 +33,7 @@ Combined with the 5 baseline conditions (425 runs from STUDY.md), sorted by succ
 | mcp-with-toolsearch   | 82%      | $0.147     | $12.45     | 41.1s        | 8         |
 | mcp-compressed-medium | 72%      | $0.136     | $11.57     | 64.9s        | 6         |
 | mcp-compressed-max    | 71%      | $0.142     | $12.09     | 48.4s        | 6         |
+| mcp-compressed-cli    | 71%      | $0.096     | $8.19      | 55.9s        | 5         |
 | mcp-compressed-low    | 69%      | $0.140     | $11.88     | 61.9s        | 6         |
 | mcp-compressed-high   | 69%      | $0.146     | $12.38     | 65.8s        | 6         |
 
@@ -39,13 +41,29 @@ Combined with the 5 baseline conditions (425 runs from STUDY.md), sorted by succ
 
 ### 1. Compression hurts reliability without saving cost
 
-All four compressed conditions have **lower success rates (69-72%)** than every baseline condition, including the direct MCP conditions they're meant to improve (82-87%). Cost is nearly identical to direct MCP (~$0.14/task vs ~$0.15), and duration is actually worse (49-66s vs 34-41s).
+All five compressed conditions have **lower success rates (69-72%)** than every baseline condition, including the direct MCP conditions they're meant to improve (82-87%). Cost for the wrapper-based modes is nearly identical to direct MCP (~$0.14/task vs ~$0.15), and duration is actually worse (49-66s vs 34-41s).
 
 The wrapper tool indirection (`list_tools` -> `get_tool_schema` -> `invoke_tool`) adds a failure mode without delivering the expected token savings. The agent still needs multiple turns to discover and invoke tools, and the extra abstraction layer confuses it.
 
-### 2. Compression level doesn't matter
+### 2. CLI mode saves cost but not reliability
 
-All four levels cluster tightly together in both success rate and cost:
+The new CLI mode (`--cli-mode`) replaces MCP wrapper tools with a generated shell script. Instead of calling `invoke_tool` with JSON arguments, the agent runs bash commands like `github list-issues --owner X --repo Y`.
+
+| Mode           | Success% | Avg Cost | Total Cost | Avg Duration | Avg Turns |
+| -------------- | -------- | -------- | ---------- | ------------ | --------- |
+| compressed-cli | 71%      | $0.096   | $8.19      | 55.9s        | 5         |
+| compressed-med | 72%      | $0.136   | $11.57     | 64.9s        | 6         |
+| compressed-max | 71%      | $0.142   | $12.09     | 48.4s        | 6         |
+| compressed-low | 69%      | $0.140   | $11.88     | 61.9s        | 6         |
+| compressed-hi  | 69%      | $0.146   | $12.38     | 65.8s        | 6         |
+
+CLI mode is **~30% cheaper** ($0.096 vs $0.136-0.146) with fewer tokens (141K vs 175-188K) and fewer turns (5 vs 6). But the success rate is unchanged at 71% — the same tier as wrapper-based compression.
+
+The cost savings come from eliminating the verbose MCP tool schemas. The agent sees a single `github_help` MCP tool description with a compact subcommand listing, then invokes commands via bash (which is already available). However, the underlying problem persists: the agent must still discover tool names and guess parameter formats from help text.
+
+### 3. Compression level doesn't matter
+
+All four wrapper-based levels cluster tightly together in both success rate and cost:
 
 | Level  | Success% | Avg Cost | Avg Duration |
 | ------ | -------- | -------- | ------------ |
@@ -56,34 +74,35 @@ All four levels cluster tightly together in both success rate and cost:
 
 Whether the agent sees full descriptions (low) or nothing at all (max), the bottleneck is the wrapper tool pattern itself — not how much information is available upfront.
 
-### 3. The wrapper layer compounds failure modes
+### 4. The wrapper/CLI layer compounds failure modes
 
-The compressed conditions fail on the same tasks that challenge direct MCP (`list_labels`, `ci_failure_investigation`, `merged_pr_ci_audit`) but also fail on tasks that direct MCP handles fine:
+All compressed conditions (including CLI mode) fail on the same tasks that challenge direct MCP, plus tasks that direct MCP handles fine:
 
-| Task                     | Direct MCP (best) | Compressed (best) |
-| ------------------------ | ----------------- | ----------------- |
-| list_releases            | 5/5               | 0/5 (all levels)  |
-| run_then_jobs            | 4/5               | 0/5 (all levels)  |
-| ci_failure_investigation | 2/5               | 1/5               |
-| merged_pr_ci_audit       | 3/5               | 1/5               |
-| list_labels              | 0/5               | 0/5               |
+| Task                     | Direct MCP (best) | Wrapper (best) | CLI mode |
+| ------------------------ | ----------------- | -------------- | -------- |
+| list_releases            | 5/5               | 0/5            | 0/5      |
+| run_then_jobs            | 4/5               | 0/5            | 0/5      |
+| ci_failure_investigation | 2/5               | 1/5            | 1/5      |
+| merged_pr_ci_audit       | 3/5               | 1/5            | 2/5      |
+| list_labels              | 0/5               | 0/5            | 0/5      |
+| weekly_catchup           | 5/5               | 4/5            | 3/5      |
 
-The wrapper adds a meta-reasoning requirement: the agent must reason about the wrapper API and the underlying tool API simultaneously, which introduces confusion and premature abandonment.
+CLI mode matches or slightly beats the wrapper modes on `merged_pr_ci_audit` (2/5 vs 0-1/5), but performs worse on `weekly_catchup` (3/5 vs 4-5/5). The indirection — whether through `invoke_tool` or a CLI bridge — adds a meta-reasoning requirement that introduces confusion and premature abandonment.
 
-### 4. Comparison with ToolSearch
+### 5. Comparison with ToolSearch
 
 MCP-compressor and ToolSearch solve the same problem (too many tool schemas in context) with different approaches:
 
-|               | ToolSearch        | mcp-compressor      |
-| ------------- | ----------------- | ------------------- |
-| Mechanism     | Lazy search/load  | Wrapper tools       |
-| Tools visible | All names, search | 2-3 wrappers        |
-| Schema access | Load on demand    | `get_tool_schema`   |
-| Invocation    | Direct tool call  | `invoke_tool` proxy |
-| Success rate  | 82%               | 69-72%              |
-| Avg cost      | $0.147            | $0.136-0.146        |
+|               | ToolSearch        | mcp-compressor (wrapper) | mcp-compressor (CLI) |
+| ------------- | ----------------- | ------------------------ | -------------------- |
+| Mechanism     | Lazy search/load  | Wrapper tools            | Shell script         |
+| Tools visible | All names, search | 2-3 wrappers             | 1 help tool          |
+| Schema access | Load on demand    | `get_tool_schema`        | `--help` flag        |
+| Invocation    | Direct tool call  | `invoke_tool` proxy      | Bash command         |
+| Success rate  | 82%               | 69-72%                   | 71%                  |
+| Avg cost      | $0.147            | $0.136-0.146             | $0.096               |
 
-ToolSearch wins on reliability because once a tool is discovered and loaded, the agent calls it directly with full schema support. With mcp-compressor, every invocation goes through `invoke_tool`, so the agent never gets native tool-calling support — it must manually construct the arguments as a JSON object passed to the wrapper.
+ToolSearch wins on reliability because once a tool is discovered and loaded, the agent calls it directly with full schema support. CLI mode has the best cost profile of the compressed options, but shares the same reliability ceiling.
 
 ## Example: Wrapper Confusion on `run_then_jobs`
 
@@ -157,11 +176,12 @@ This pattern — **meta-layer confusion causing discovery failure** — is the d
 - Same as [baseline study](https://axi.md): fresh shallow clone, Claude agent, LLM judge
 - MCP-compressor runs as a stdio server via `uvx mcp-compressor` proxying the GitHub Copilot MCP endpoint
 - All four compression levels tested with `--server-name github` (prefixing wrapper tools as `github_*`)
-- ToolSearch disabled for compressed conditions (only 2-3 wrapper tools, no need for discovery)
+- CLI mode tested with `--cli-mode --server-name github`, which exposes a single `github_help` MCP tool and generates a `github` shell script that the agent calls via bash
+- ToolSearch disabled for all compressed conditions
 
 ## Files
 
-- `results.jsonl` — Combined raw results (765 runs: 425 baseline + 340 compressed)
+- `results.jsonl` — Combined raw results (850 runs: 425 baseline + 425 compressed)
 - `report.md` — Summary tables with per-task breakdowns
 - `report.csv` — Full CSV export for analysis
 - `STUDY.md` — Original 5-condition baseline study

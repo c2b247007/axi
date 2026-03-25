@@ -1,0 +1,1 @@
+{"pass": true, "reason": "The agent ran an appropriate GitHub search command, retrieved the repository data, and correctly reported all three requested fields: star count (334,775), primary language (TypeScript), and default branch (main). The star count is consistent with the known fact of ~326k stars (within reasonable variance given the live data)."}

@@ -1,0 +1,1 @@
+{"pass": true, "reason": "The agent ran appropriate gh commands to list the 5 most recent failed workflow runs and then fetched job-level details for each run in parallel. All 5 runs are reported with distinct run IDs, workflow names, and specific failed job names, meeting the completeness requirement."}

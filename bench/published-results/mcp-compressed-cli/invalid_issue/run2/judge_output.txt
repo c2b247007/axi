@@ -1,0 +1,1 @@
+{"pass": true, "reason": "The agent correctly attempted to fetch issue #999999 from openclaw/openclaw, received a 404 Not Found error from the GitHub API, and accurately reported that the issue does not exist. The agent initially missed the required --method option but recovered and ran the correct command, then properly interpreted the 404 error response."}

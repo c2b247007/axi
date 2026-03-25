@@ -1,0 +1,4 @@
+{
+  "task_success": false,
+  "details": "The agent failed to complete the task. It correctly identified that the `github` CLI tool lacks workflow run subcommands, but it did not attempt to use `gh run list` or the GitHub REST API via other means (e.g., `gh api` or `curl`) to retrieve the failed workflow runs. The agent stopped and asked the user for guidance instead of producing the required report of 5 failed runs with run IDs, workflow names, and specific failed job names. No data was retrieved and no findings were reported."
+}

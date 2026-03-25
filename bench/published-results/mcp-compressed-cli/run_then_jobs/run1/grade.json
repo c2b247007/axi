@@ -1,0 +1,4 @@
+{
+  "task_success": false,
+  "details": "The agent failed to complete the task. It only checked the 'github' CLI help output and concluded it couldn't fulfill the request. The agent did not attempt to use 'gh' CLI (the standard GitHub CLI tool), curl with the GitHub API, or any other available method to list workflow runs and jobs. The agent also claimed CLAUDE.md prohibits using 'gh' or 'curl' without verifying this, and never actually retrieved workflow run data or job names/statuses from the openclaw/openclaw repository."
+}

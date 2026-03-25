@@ -1,0 +1,4 @@
+{
+  "task_success": false,
+  "details": "The agent failed to list all labels in openclaw/openclaw. It used an indirect approach of scanning issues for applied labels, finding only ~9-14 unique labels, which is far from the known ~124 labels. The agent never found a proper method to list all repository labels (e.g., using the GitHub REST/GraphQL API directly), and never produced a complete, accurate answer. The task ended with a background command still running and no definitive count reported."
+}

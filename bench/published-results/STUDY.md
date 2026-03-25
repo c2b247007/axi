@@ -12,23 +12,25 @@ This study compares five different interfaces that AI agents use to interact wit
 
 ## Conditions
 
-| Condition             | Interface           | Description                                                                                                                                                                                  |
-| --------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cli`                 | `gh` CLI            | Raw GitHub CLI — the baseline. Agent runs `gh issue list`, `gh pr view`, etc.                                                                                                                |
-| `axi`                 | `gh-axi`            | AXI-compliant wrapper. Same subcommands as `gh` but with structured TOON output, pre-computed summaries (counts, check results), contextual suggestions, and progressive content disclosure. |
-| `mcp-with-toolsearch` | GitHub MCP          | Remote MCP server (`api.githubcopilot.com/mcp/`). Agent discovers tools via ToolSearch, then invokes them.                                                                                   |
-| `mcp-no-toolsearch`   | GitHub MCP (eager)  | Same MCP server but ToolSearch disabled — all tool schemas loaded into context upfront.                                                                                                      |
-| `mcp-with-code-mode`  | TypeScript wrappers | Agent writes `.ts` scripts that call typed functions wrapping GitHub operations, then runs them with `npx tsx`.                                                                              |
+| Condition             | Interface            | Description                                                                                                                                                                                  |
+| --------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cli`                 | `gh` CLI             | Raw GitHub CLI — the baseline. Agent runs `gh issue list`, `gh pr view`, etc.                                                                                                                |
+| `axi`                 | `gh-axi`             | AXI-compliant wrapper. Same subcommands as `gh` but with structured TOON output, pre-computed summaries (counts, check results), contextual suggestions, and progressive content disclosure. |
+| `mcp-with-toolsearch` | GitHub MCP           | Remote MCP server (`api.githubcopilot.com/mcp/`). Agent discovers tools via ToolSearch, then invokes them.                                                                                   |
+| `mcp-no-toolsearch`   | GitHub MCP (eager)   | Same MCP server but ToolSearch disabled — all tool schemas loaded into context upfront.                                                                                                      |
+| `mcp-with-code-mode`  | TypeScript wrappers  | Agent writes `.ts` scripts that call typed functions wrapping GitHub operations, then runs them with `npx tsx`.                                                                              |
+| `mcp-compressed-cli`  | mcp-compressor (CLI) | [mcp-compressor](https://github.com/atlassian-labs/mcp-compressor/) `--cli-mode`: generates a `github` shell script the agent calls via bash. One MCP help tool for discovery.               |
 
 ## Key Results (averages across 85 runs per condition)
 
 | Condition           | Success% | Avg Cost   | Total Cost | Avg Duration | Avg Turns |
 | ------------------- | -------- | ---------- | ---------- | ------------ | --------- |
 | **axi**             | **100%** | **$0.050** | **$4.26**  | **15.7s**    | 3         |
-| cli                 | 86%      | $0.054     | $4.58      | 17.4s        | 3         |
 | mcp-no-toolsearch   | 87%      | $0.148     | $12.59     | 34.2s        | 6         |
-| mcp-with-toolsearch | 82%      | $0.147     | $12.45     | 41.1s        | 8         |
+| cli                 | 86%      | $0.054     | $4.58      | 17.4s        | 3         |
 | mcp-with-code-mode  | 84%      | $0.101     | $8.54      | 43.4s        | 7         |
+| mcp-with-toolsearch | 82%      | $0.147     | $12.45     | 41.1s        | 8         |
+| mcp-compressed-cli  | 71%      | $0.096     | $8.19      | 55.9s        | 5         |
 
 ## Findings
 
@@ -71,7 +73,27 @@ The takeaway: lazy tool loading is a net negative when the agent needs most of t
 
 Writing TypeScript scripts adds overhead (43.4s avg, 7 turns) but amortizes MCP schema costs by composing multiple operations in a single script: $0.101/task vs $0.147–0.148 for direct MCP. Still 2× more expensive than CLI/AXI.
 
-### 6. Key AXI advantages by task type
+### 6. mcp-compressor CLI mode: cheaper than MCP, less reliable than everything
+
+[mcp-compressor](https://github.com/atlassian-labs/mcp-compressor/) `--cli-mode` generates a shell script (`github`) that the agent calls via bash instead of MCP tool calls. At $0.096/task it sits between CLI/AXI ($0.05) and direct MCP ($0.15), but its 71% success rate is the lowest of all conditions.
+
+|                  | axi    | cli    | mcp-compressed-cli | mcp-no-toolsearch |
+| ---------------- | ------ | ------ | ------------------ | ----------------- |
+| Success%         | 100%   | 86%    | 71%                | 87%               |
+| Avg cost         | $0.050 | $0.054 | $0.096             | $0.148            |
+| Avg input tokens | 46K    | 47K    | 141K               | 176K              |
+| Avg turns        | 3      | 3      | 5                  | 6                 |
+
+The dominant failure modes (from trajectory analysis of failed runs):
+- **CLI flag guessing** (4/5 failures): The compressor auto-generates non-standard flags from MCP schema parameter names (`--perPage`, `--method get_comments`, `--labels` not `--label`). The agent's prior on `gh` CLI conventions leads it to guess wrong on the first try, burning a turn on each error-recovery cycle.
+- **Premature surrender** (3/5 failures): When a subcommand is missing, the agent gives up instead of trying `--help` on related commands or falling back to `gh`/`curl`. It sometimes invents restrictions ("CLAUDE.md prohibits `gh`/`curl`") to justify quitting.
+- **Shallow data extraction** (2/5 failures): The agent uses `grep` on paginated CLI output and gets page-size counts (30) instead of reading the structured `totalCount` field from the same response. The compressor's toonified output includes metadata, but the agent doesn't parse it.
+- **Missing tool surface** (2/5 failures): The GitHub Copilot MCP server doesn't expose workflow runs or list-labels through the compressor's CLI bridge, causing 0/5 on `run_then_jobs` and `list_labels`.
+- **Over-extending past the answer** (1/5 failures): The agent finds the correct answer but keeps searching for a "better" one, producing a muddled multi-part response that the judge grades as incorrect.
+
+See [STUDY-mcp-compressor.md](STUDY-mcp-compressor.md) for full analysis across all 5 compression modes.
+
+### 7. Key AXI advantages by task type
 
 - **Simple lookups** (list_open_issues, view_pr): AXI and CLI perform similarly. AXI's structured output offers marginal benefit.
 - **Count-dependent tasks** (list_labels): AXI wins decisively (5/5 vs CLI 0/5) because it includes `totalCount` in output. CLI agents can't determine if they've seen all items.

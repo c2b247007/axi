@@ -1,0 +1,1 @@
+{"pass": true, "reason": "The agent ran the 'github list-issues' command to fetch open issues from openclaw/openclaw, received actual data, and correctly identified the most recent open issue as #54250 'OpenClaw Skill 微信交流群' created on 2026-03-25."}

@@ -1,0 +1,4 @@
+{
+  "task_success": false,
+  "details": "The agent gathered relevant data through numerous commands — identifying failed check runs across multiple PRs and extracting run IDs from check run URLs — but never produced a final consolidated report. The trajectory ends mid-investigation (listing workflow files to identify workflow names) without ever synthesizing the findings into the required answer: 5 distinct failed runs with run IDs, workflow names, and specific failed job names. The KNOWN FACTS require all three components per run in a complete report, and no such report was delivered to the user."
+}

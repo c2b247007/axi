@@ -1,0 +1,4 @@
+{
+  "task_success": false,
+  "details": "The agent never delivered a final answer to the user. The trajectory ends with diagnostic commands still running. Additionally, PR #52545's CI data was misinterpreted (Python parsed YAML as CSV, producing garbage conclusions and wrongly labeling it 'ALL GREEN' when 10 checks were still in_progress/queued). The task required a complete formatted report with title, author, and CI status for all 10 PRs plus a final green count — none of which was produced."
+}

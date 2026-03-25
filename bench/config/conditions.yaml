@@ -196,3 +196,25 @@ conditions:
 
       IMPORTANT: Do NOT use the `gh` CLI or `curl` to call the GitHub API.
       You must use the wrapper tools exclusively for all GitHub operations.
+
+  mcp-compressed-cli:
+    name: "GitHub MCP (compressed-cli)"
+    tool: mcp-compressed
+    mcp_compressor:
+      level: medium
+      server_name: github
+      cli_mode: true
+    agents_md: |
+      # Tools
+
+      You have a `github` CLI tool for all GitHub operations. Use it via bash.
+      Run `github --help` to see available subcommands, and
+      `github <subcommand> --help` for detailed usage of each subcommand.
+
+      Examples:
+      - `github list-issues --owner openclaw --repo openclaw --state open`
+      - `github get-pull-request --owner openclaw --repo openclaw --pull-number 123`
+      - `github list-releases --owner openclaw --repo openclaw`
+
+      IMPORTANT: Do NOT use the `gh` CLI or `curl` to call the GitHub API.
+      You must use the `github` CLI exclusively for all GitHub operations.
