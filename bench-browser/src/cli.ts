@@ -16,7 +16,7 @@ import { parse as parseYaml } from "yaml";
 import type { ConditionDef, ConditionId, TaskDef } from "./types.js";
 import { runOne } from "./runner.js";
 import { writeReports } from "./reporter.js";
-import { startDaemon, stopDaemon } from "./lifecycle.js";
+import { startDaemon, stopDaemon, killOrphanedBrowsers } from "./lifecycle.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -179,7 +179,7 @@ async function cmdMatrix(argv: string[]): Promise<void> {
         const result = await execFileAsync(
           "npx",
           ["tsx", "src/cli.ts", "matrix", "--condition", condId, ...childArgs],
-          { cwd: BENCH_ROOT, maxBuffer: 50 * 1024 * 1024, timeout: 0, env: process.env },
+          { cwd: BENCH_ROOT, maxBuffer: 50 * 1024 * 1024, timeout: 0, env: { ...process.env, BENCH_PARALLEL_CHILD: "1" } },
         );
         console.log(result.stdout);
         if (result.stderr) console.error(result.stderr);
@@ -190,6 +190,8 @@ async function cmdMatrix(argv: string[]): Promise<void> {
       }
     });
     await Promise.all(promises);
+    // Clean up browsers once after all parallel children finish
+    killOrphanedBrowsers();
   } else {
     // Sequential mode: run each condition in turn with daemon lifecycle
     for (const condId of conditionIds) {

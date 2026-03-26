@@ -222,8 +222,11 @@ function stopBridge(): void {
 /**
  * Kill orphaned Chrome/Chromium processes that may have been left behind.
  * This is a best-effort cleanup to prevent resource leaks.
+ * Skipped in parallel child processes (BENCH_PARALLEL_CHILD=1) to avoid
+ * killing browsers still in use by sibling conditions.
  */
-function killOrphanedBrowsers(): void {
+export function killOrphanedBrowsers(): void {
+  if (process.env.BENCH_PARALLEL_CHILD === "1") return;
   try {
     // Only kill headless Chrome processes that were likely spawned by the benchmark
     execSync("pkill -f 'chrome.*--headless' 2>/dev/null || true", {

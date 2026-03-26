@@ -63,9 +63,10 @@ tasks:
     category: multi_step
     prompt: >
       Navigate to https://github.com/torvalds/linux, then browse to the
-      MAINTAINERS file and report the name of the first maintainer listed.
+      Makefile at the root of the repository and report the VERSION and
+      PATCHLEVEL values defined at the top of the file.
     grading:
-      grading_hint: "The MAINTAINERS file in the Linux kernel lists Linus Torvalds as the overall maintainer at the top. The agent must have navigated through the repository to find and read the file."
+      grading_hint: "The Linux kernel Makefile defines VERSION and PATCHLEVEL in its first few lines (e.g. VERSION = 6, PATCHLEVEL = 15). The exact numbers change over time as new kernel versions are released. The agent must have navigated to the repository, opened the Makefile, and read the actual values — not hallucinated them."
 
   wikipedia_infobox_hop:
     category: multi_step
