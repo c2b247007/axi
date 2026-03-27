@@ -4,7 +4,7 @@
 
 AI agents interact with external services through two dominant paradigms today: **CLIs** which were originally built for humans, and structured tool protocols like **MCP**. Both impose significant overhead — CLIs produce verbose, metadata-sparse output that wastes token budgets, while MCP tool schemas consume a lot of context tokens upfront.
 
-AXI is a **new paradigm** — agent-native CLI tools built from **10 design principles** that treat token budget as a first-class constraint. An AXI provides token-optimized output formatting, pre-computed aggregate fields, contextual next-step suggestions, and structured error handling. **`gh-axi`** is the first AXI — a `gh` wrapper you can install today and point your agent at via `CLAUDE.md` or `AGENTS.md`.
+AXI is a **new paradigm** — agent-native CLI tools built from **10 design principles** that treat token budget as a first-class constraint. An AXI provides token-optimized output formatting, pre-computed aggregate fields, contextual next-step suggestions, and structured error handling. **[`gh-axi`](https://github.com/kunchenguid/gh-axi)** is the first AXI — a `gh` wrapper you can install today and point your agent at via `CLAUDE.md` or `AGENTS.md`.
 
 ## Results
 
@@ -20,7 +20,7 @@ Evaluated across 425 benchmark runs (17 tasks × 5 conditions × 5 repeats) usin
 
 ## Quick Start
 
-`gh-axi` is the reference AXI implementation — an ergonomic wrapper around the `gh` CLI.
+[`gh-axi`](https://github.com/kunchenguid/gh-axi) is the reference AXI implementation — an ergonomic wrapper around the `gh` CLI.
 
 ```sh
 $ npm install -g gh-axi
@@ -63,7 +63,7 @@ This installs the [AXI skill](.agents/skills/axi/SKILL.md) — a detailed guide 
 
 ## gh-axi
 
-`gh-axi` wraps the `gh` CLI with token-efficient TOON output, pre-computed fields, contextual suggestions, and structured errors. See the [gh-axi README](gh-axi/) for full usage and command reference.
+`gh-axi` wraps the `gh` CLI with token-efficient TOON output, pre-computed fields, contextual suggestions, and structured errors. See the [gh-axi repo](https://github.com/kunchenguid/gh-axi) for full usage and command reference.
 
 ```sh
 $ gh-axi pr list --state merged --limit 3
@@ -77,18 +77,6 @@ help[1]:
 ```
 
 ## Development
-
-### gh-axi
-
-```sh
-cd gh-axi
-npm install       # Install dependencies
-npm run dev       # Run in development (tsx)
-npm run build     # Build (tsc)
-npm test          # Run tests (vitest)
-```
-
-Requires Node.js >= 20 and the [GitHub CLI](https://cli.github.com/) (`gh`) installed and authenticated.
 
 ### Running the Benchmark
 
