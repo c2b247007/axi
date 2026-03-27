@@ -2,6 +2,10 @@
 
 <h3 align="center">A new standard for agent ergonomics which beats both MCP and regular CLI in success rate and efficiency.</h3>
 
+<p align="center">
+  <img src="docs/axi-splash.png" alt="AXI — Let's build apps agents love." width="600">
+</p>
+
 AI agents interact with external services through two dominant paradigms today: **CLIs** which were originally built for humans, and structured tool protocols like **MCP**. Both impose significant overhead — CLIs produce verbose, metadata-sparse output that wastes token budgets, while MCP tool schemas consume a lot of context tokens upfront.
 
 AXI is a **new paradigm** — agent-native CLI tools built from **10 design principles** that treat token budget as a first-class constraint. An AXI provides token-optimized output formatting, pre-computed aggregate fields, contextual next-step suggestions, and structured error handling. **[`gh-axi`](https://github.com/kunchenguid/gh-axi)** is the first AXI — a `gh` wrapper you can install today and point your agent at via `CLAUDE.md` or `AGENTS.md`.
