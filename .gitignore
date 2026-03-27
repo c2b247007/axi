@@ -17,7 +17,6 @@ docs/blog.md
 
 # Desloppify
 .desloppify/
-*.png
 
 # OS
 .DS_Store
