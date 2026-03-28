@@ -444,6 +444,22 @@
               fields with size hints and escape hatches
             </li>
             <li>
+              <strong>Pre-computed aggregates</strong> &mdash; Include
+              aggregated counts and statuses that eliminate round trips
+            </li>
+            <li>
+              <strong>Definitive empty states</strong> &mdash; Explicit &ldquo;0
+              results&rdquo; rather than ambiguous empty output
+            </li>
+            <li>
+              <strong>Structured errors &amp; exit codes</strong> &mdash;
+              Idempotent mutations, structured errors, no interactive prompts
+            </li>
+            <li>
+              <strong>Ambient context</strong> &mdash; Self-install into session
+              hooks so agents see state before invoking
+            </li>
+            <li>
               <strong>Content first</strong> &mdash; Prefer showing actual data,
               not a wall of help text
             </li>
@@ -455,27 +471,11 @@
               <strong>Consistent way to get help</strong> &mdash; Concise
               per-subcommand reference for when agents need it
             </li>
-            <li>
-              <strong>Pre-computed fields</strong> &mdash; Include aggregated
-              statuses that eliminate round trips
-            </li>
-            <li>
-              <strong>Definitive empty states</strong> &mdash; Explicit &ldquo;0
-              results&rdquo; rather than ambiguous empty output
-            </li>
-            <li>
-              <strong>Graceful error handling</strong> &mdash; Idempotent
-              mutations, structured errors, no interactive prompts
-            </li>
-            <li>
-              <strong>Output discipline</strong> &mdash; stdout for data, stderr
-              for debug; clean exit codes
-            </li>
           </ol>
         </div>
 
-        <!-- Output Efficiency -->
-        <h3 class="mt-xl">Output Efficiency</h3>
+        <!-- Efficiency -->
+        <h3 class="mt-xl">Efficiency</h3>
 
         <h4><span class="text-accent">1.</span> Token-efficient output</h4>
         <p>
@@ -520,59 +520,11 @@
           tasks.
         </p>
 
-        <!-- Discoverability -->
+        <!-- Robustness -->
         <hr class="divider" />
-        <h3>Discoverability</h3>
+        <h3>Robustness</h3>
 
-        <h4><span class="text-accent">4.</span> Content first</h4>
-        <p>
-          Running a command with no arguments should display live, actionable
-          data rather than help text.
-        </p>
-
-        <div class="grid grid--2">
-          <div class="card">
-            <p class="section-label">Conventional: no-args shows help</p>
-            <pre><code>$ gh issue
-Work with GitHub issues.
-
-USAGE
-  gh issue &lt;command&gt; [flags]
-
-AVAILABLE COMMANDS
-  close, create, list, view, ...</code></pre>
-          </div>
-          <div class="card">
-            <p class="section-label">AXI: no-args shows live state</p>
-            <pre><code>$ gh-axi issue
-count: 14 of 8771 total
-issues[14]{number,title,state}:
-  51815,"[Bug]: Telegram plugin...",open
-  ...
-help[2]:
-  Run `gh-axi issue view &lt;number&gt;`
-  Run `gh-axi issue create --title "..."`</code></pre>
-          </div>
-        </div>
-
-        <h4><span class="text-accent">5.</span> Contextual disclosure</h4>
-        <p>
-          Append <code>help[]</code> lines after output, suggesting logical next
-          steps as complete, copy-pasteable commands. This eliminates
-          tool-discovery turns and guides agents through multi-step workflows.
-        </p>
-
-        <h4><span class="text-accent">6.</span> Consistent way to get help</h4>
-        <p>
-          Each subcommand should offer a concise <code>--help</code> flag as a
-          fallback when contextual hints are insufficient.
-        </p>
-
-        <!-- Completeness -->
-        <hr class="divider" />
-        <h3>Completeness</h3>
-
-        <h4><span class="text-accent">7.</span> Pre-computed fields</h4>
+        <h4><span class="text-accent">4.</span> Pre-computed aggregates</h4>
         <p>
           Include aggregate or derived fields that eliminate round trips. The
           most impactful example is <code>totalCount</code>: always report the
@@ -606,7 +558,7 @@ pull_request:
           </div>
         </div>
 
-        <h4><span class="text-accent">8.</span> Definitive empty states</h4>
+        <h4><span class="text-accent">5.</span> Definitive empty states</h4>
         <p>
           When a query returns no results, output an explicit zero-result
           message rather than empty output. Agents cannot distinguish &ldquo;no
@@ -614,21 +566,73 @@ pull_request:
           signal.
         </p>
 
-        <!-- Robustness -->
-        <hr class="divider" />
-        <h3>Robustness</h3>
-
-        <h4><span class="text-accent">9.</span> Graceful error handling</h4>
+        <h4>
+          <span class="text-accent">6.</span> Structured errors &amp; exit codes
+        </h4>
         <p>
           Mutations should be idempotent, errors should be structured and
           written to stdout (not stderr), and commands must never prompt for
-          interactive input.
+          interactive input. Reserve stdout for structured data and stderr for
+          debug/log output. Use clean exit codes: 0 for success, 1 for errors.
         </p>
 
-        <h4><span class="text-accent">10.</span> Output discipline</h4>
+        <!-- Discoverability -->
+        <hr class="divider" />
+        <h3>Discoverability</h3>
+
+        <h4><span class="text-accent">7.</span> Ambient context</h4>
         <p>
-          Reserve stdout for structured data and stderr for debug/log output.
-          Use clean exit codes: 0 for success, 1 for errors.
+          Self-install into the agent&rsquo;s session hooks so that every
+          conversation starts with relevant state already visible &mdash; before
+          the agent takes any action. The hook outputs a compact,
+          directory-scoped dashboard to stdout, which the agent receives as
+          initial context.
+        </p>
+
+        <h4><span class="text-accent">8.</span> Content first</h4>
+        <p>
+          Running a command with no arguments should display live, actionable
+          data rather than help text.
+        </p>
+
+        <div class="grid grid--2">
+          <div class="card">
+            <p class="section-label">Conventional: no-args shows help</p>
+            <pre><code>$ gh issue
+Work with GitHub issues.
+
+USAGE
+  gh issue &lt;command&gt; [flags]
+
+AVAILABLE COMMANDS
+  close, create, list, view, ...</code></pre>
+          </div>
+          <div class="card">
+            <p class="section-label">AXI: no-args shows live state</p>
+            <pre><code>$ gh-axi issue
+count: 14 of 8771 total
+issues[14]{number,title,state}:
+  51815,"[Bug]: Telegram plugin...",open
+  ...
+help[2]:
+  Run `gh-axi issue view &lt;number&gt;`
+  Run `gh-axi issue create --title "..."`</code></pre>
+          </div>
+        </div>
+
+        <h4><span class="text-accent">9.</span> Contextual disclosure</h4>
+        <p>
+          Append <code>help[]</code> lines after output, suggesting logical next
+          steps as complete, copy-pasteable commands. This eliminates
+          tool-discovery turns and guides agents through multi-step workflows.
+        </p>
+
+        <h4>
+          <span class="text-accent">10.</span> Consistent way to get help
+        </h4>
+        <p>
+          Each subcommand should offer a concise <code>--help</code> flag as a
+          fallback when contextual hints are insufficient.
         </p>
       </section>
 

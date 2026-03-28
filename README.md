@@ -60,18 +60,18 @@ Use `gh-axi` for GitHub and `chrome-devtools-axi` for browser automation.
 
 These principles define what makes a CLI tool "an AXI":
 
-| #   | Principle                   | Summary                                                                     |
-| --- | --------------------------- | --------------------------------------------------------------------------- |
-| 1   | **Token-efficient output**  | Use [TOON](https://toonformat.dev/) format for ~40% token savings over JSON |
-| 2   | **Content first**           | Running with no arguments shows live data, not help text                    |
-| 3   | **Contextual disclosure**   | Include next-step suggestions after each output                             |
-| 4   | **Provide --help**          | Concise per-subcommand reference when agents need it                        |
-| 5   | **Minimal default schemas** | 3–4 fields per list item, not 10                                            |
-| 6   | **Pre-computed fields**     | Include aggregated statuses that eliminate round trips                      |
-| 7   | **Content truncation**      | Truncate large text with size hints and `--full` escape hatch               |
-| 8   | **Definitive empty states** | Explicit "0 results" rather than ambiguous empty output                     |
-| 9   | **Error handling**          | Idempotent mutations, structured errors, no interactive prompts             |
-| 10  | **Output discipline**       | stdout for data, stderr for debug; clean exit codes                         |
+| #   | Principle                          | Summary                                                                     |
+| --- | ---------------------------------- | --------------------------------------------------------------------------- |
+| 1   | **Token-efficient output**         | Use [TOON](https://toonformat.dev/) format for ~40% token savings over JSON |
+| 2   | **Minimal default schemas**        | 3–4 fields per list item, not 10                                            |
+| 3   | **Content truncation**             | Truncate large text with size hints and `--full` escape hatch               |
+| 4   | **Pre-computed aggregates**        | Include aggregated counts and statuses that eliminate round trips           |
+| 5   | **Definitive empty states**        | Explicit "0 results" rather than ambiguous empty output                     |
+| 6   | **Structured errors & exit codes** | Idempotent mutations, structured errors, no interactive prompts             |
+| 7   | **Ambient context**                | Self-install into session hooks so agents see state before invoking         |
+| 8   | **Content first**                  | Running with no arguments shows live data, not help text                    |
+| 9   | **Contextual disclosure**          | Include next-step suggestions after each output                             |
+| 10  | **Consistent way to get help**     | Concise per-subcommand reference when agents need it                        |
 
 ## Build Your Own AXI
 
