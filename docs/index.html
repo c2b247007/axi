@@ -1366,6 +1366,45 @@ $ chrome-devtools-axi open &lt;js-url&gt; \
           DOM. AXI&rsquo;s text-oriented output kept the entire workflow in
           standard unix idioms.
         </p>
+
+        <hr class="divider" />
+
+        <h3>Case D: ToolSearch picks the wrong tool</h3>
+        <p class="text-muted">
+          <code>github_repo_stars</code> &mdash; Navigate to
+          github.com/torvalds/linux and report the star count and primary
+          language.
+        </p>
+
+        <p>
+          This is a simple single-step task. chrome-devtools-axi completes it in
+          4 calls (open, grep for stars, grep for languages, answer). But under
+          ToolSearch, it fails <strong>5 out of 5 runs</strong> with an
+          identical failure mode:
+        </p>
+
+        <div class="card mt-md">
+          <p class="section-label">The agent&rsquo;s ToolSearch query</p>
+          <pre><code>select:mcp__chrome-devtools__navigate_page,mcp__chrome-devtools__take_screenshot</code></pre>
+        </div>
+
+        <p class="mt-md">
+          The server exposes both <code>take_screenshot</code> (base64 PNG,
+          ~1.1MB) and <code>take_snapshot</code> (text accessibility tree,
+          ~80KB). The agent guessed <code>take_screenshot</code>. After
+          navigating successfully, the screenshot response (1,106,093 characters
+          of base64) blew the output buffer, truncating the session mid-stream.
+          The agent never produced an answer.
+        </p>
+        <p>
+          This happened identically in all 5 runs &mdash; the agent always
+          guessed the wrong tool name and the session always died on the
+          screenshot payload. With eager-loading
+          (<code>chrome-devtools-mcp</code>), the
+          <code>CLAUDE.md</code> explicitly references
+          <code>take_snapshot</code> in its workflow, so the agent never
+          encounters this trap.
+        </p>
       </section>
 
       <!-- 8. Limitations -->
