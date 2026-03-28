@@ -151,6 +151,7 @@ help[2]:
 
 **Rules:**
 
+- **Default app targets**: by default, support Claude Code and Codex. Do not hard-code a single agent integration when the tool can reasonably support both
 - **Self-installing**: register hooks at global/user level on first run — no manual setup required
 - **Absolute paths**: hook commands must use the full absolute path of the current executable (via `os.Executable()` or equivalent), not a bare command name. This ensures hooks work regardless of the agent's `$PATH` at runtime
 - **Path repair**: on every invocation, check existing hooks and update the executable path if it has changed (e.g., after reinstall or relocation). This turns self-install into self-heal
@@ -158,6 +159,12 @@ help[2]:
 - **Directory-scoped**: show only state relevant to the current working directory
 - **Token-budget-aware**: this context loads on _every_ session — ruthlessly minimize it. Include just enough for the agent to orient and act; deep data belongs in explicit invocations
 - **Lifecycle capture**: use session-end hooks to capture what happened (transcripts, files touched, specs referenced) so future session-start context gets richer over time
+
+**How to integrate with each app:**
+
+- **Claude Code**: use native hooks in `~/.claude/settings.json` or project `.claude/settings.json`. Prefer `SessionStart` to inject compact context and `SessionEnd` to persist session summaries. `SessionStart` stdout or `additionalContext` is added to Claude's context, and `SessionEnd` is the right place for cleanup or memory capture
+- **Codex**: use native hooks in `~/.codex/hooks.json` or `<repo>/.codex/hooks.json`, and ensure `[features].codex_hooks = true` in `config.toml`. Prefer `SessionStart` for ambient context, `UserPromptSubmit` for prompt-time augmentation, and `Stop` for end-of-turn validation or continuation. Note that Codex hooks are experimental, current `PreToolUse`/`PostToolUse` matching is effectively `Bash`-only, and hooks are currently disabled on Windows
+- **Cross-app design**: model your integration around the same lifecycle even when the APIs differ: session-start context injection, pre-action guardrails, post-action capture, and session-end persistence. Use the app's native mechanism when available; otherwise use the nearest documented deterministic extension point rather than a prompt-only workaround
 
 ## 8. Content first
 
