@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Page Comparison Race | AXI</title>
+    <meta
+      name="description"
+      content="Minimal 3-lane social asset comparing MCP, CLI, and AXI on the Wikipedia multi-page comparison task."
+    />
+    <style>
+      :root {
+        --bg: #f5efe2;
+        --panel: rgba(255, 252, 246, 0.82);
+        --panel-strong: rgba(255, 252, 246, 0.94);
+        --text: #171411;
+        --muted: #6b645b;
+        --border: rgba(23, 20, 17, 0.1);
+        --shadow: 0 28px 60px rgba(57, 43, 22, 0.12);
+        --axi: #0f766e;
+        --mcp: #b45309;
+        --cli: #2563eb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino,
+          Georgia, serif;
+        background:
+          radial-gradient(
+            circle at 10% 10%,
+            rgba(15, 118, 110, 0.12),
+            transparent 24%
+          ),
+          radial-gradient(
+            circle at 90% 14%,
+            rgba(180, 83, 9, 0.12),
+            transparent 24%
+          ),
+          linear-gradient(180deg, #fbf5ea 0%, var(--bg) 100%);
+      }
+
+      .poster {
+        width: min(100%, 1440px);
+        min-height: 900px;
+        margin: 0 auto;
+        padding: 28px;
+      }
+
+      .frame {
+        position: relative;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.6),
+          rgba(255, 251, 244, 0.78)
+        );
+        backdrop-filter: blur(18px);
+        box-shadow: var(--shadow);
+        padding: 26px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .task {
+        margin: 0 0 14px;
+        padding: 10px 0 14px;
+        font-size: clamp(24px, 2.6vw, 34px);
+        font-weight: 700;
+        line-height: 0.98;
+        letter-spacing: -0.03em;
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .lane {
+        display: flex;
+        flex-direction: column;
+        min-height: 620px;
+        border-radius: 26px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        padding: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .lane::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 8px;
+        background: var(--lane-color);
+      }
+
+      .lane-head {
+        margin-bottom: 12px;
+      }
+
+      .lane-label {
+        margin: 0;
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+
+      .lane-name {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .compact-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .metric {
+        padding: 10px 10px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.54);
+      }
+
+      .metric-label {
+        display: block;
+        color: var(--muted);
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .metric-value {
+        display: block;
+        margin-top: 6px;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: -0.05em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .steps {
+        display: grid;
+        gap: 8px;
+        flex: 1;
+      }
+
+      .step {
+        display: grid;
+        align-content: center;
+        min-height: 54px;
+        padding: 10px 12px 10px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.58);
+        opacity: 0.18;
+        transform: translateY(10px) scale(0.985);
+        transition:
+          opacity 280ms ease,
+          transform 280ms ease,
+          box-shadow 280ms ease,
+          background 280ms ease;
+      }
+
+      .step.active {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        box-shadow: 0 16px 36px rgba(51, 39, 19, 0.08);
+      }
+
+      .step.current {
+        background: color-mix(in srgb, var(--lane-color) 12%, white);
+        outline: 2px solid color-mix(in srgb, var(--lane-color) 28%, white);
+      }
+
+      .step-title {
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.05em;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-family:
+          ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+      }
+
+      @media (max-width: 1100px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+
+        .lane {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="poster">
+      <section class="frame">
+        <p class="eyebrow">AXI Browser Benchmark Example</p>
+        <div class="task">
+          Check two Wikipedia pages and report who designed Python and
+          JavaScript.
+        </div>
+
+        <section class="lanes" id="lanes"></section>
+
+        <div class="footer">
+          <span
+            >Metrics shown: Turns, total input tokens, and elapsed time.</span
+          >
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const raceData = [
+        {
+          label: "AXI",
+          name: "chrome-devtools-axi",
+          color: "#0f766e",
+          metrics: { turns: 5, tokens: 160122, time: 23.0 },
+          steps: [
+            { title: "open" },
+            { title: "open | head" },
+            { title: "open | grep" },
+            { title: "open | grep" },
+            { title: "answer" },
+          ],
+        },
+        {
+          label: "CLI",
+          name: "agent-browser",
+          color: "#2563eb",
+          metrics: { turns: 7, tokens: 231300, time: 34.4 },
+          steps: [
+            { title: "navigate" },
+            { title: "snapshot | head" },
+            { title: "navigate" },
+            { title: "snapshot | grep" },
+            { title: "navigate" },
+            { title: "snapshot | grep" },
+            { title: "answer" },
+          ],
+        },
+        {
+          label: "MCP",
+          name: "chrome-devtools-mcp",
+          color: "#b45309",
+          metrics: { turns: 9, tokens: 427660, time: 31.4 },
+          steps: [
+            { title: "navigate_page" },
+            { title: "take_snapshot" },
+            { title: "Grep" },
+            { title: "Grep" },
+            { title: "evaluate_script" },
+            { title: "evaluate_script" },
+            { title: "navigate_page" },
+            { title: "evaluate_script" },
+            { title: "answer" },
+          ],
+        },
+      ];
+
+      const introDelay = 500;
+      const maxLaneDuration =
+        Math.max(...raceData.map((lane) => lane.metrics.time)) * 1000;
+      const lanesRoot = document.getElementById("lanes");
+      let raceStart = 0;
+      let frameId = 0;
+
+      function formatMetric(value, kind) {
+        if (kind === "tokens") return Math.round(value).toLocaleString("en-US");
+        if (kind === "time") return `${value.toFixed(1)}s`;
+        return `${Math.round(value)}`;
+      }
+
+      function renderLane(lane) {
+        const article = document.createElement("article");
+        article.className = "lane";
+        article.style.setProperty("--lane-color", lane.color);
+        article.innerHTML = `
+          <div class="lane-head">
+            <h2 class="lane-label">${lane.label}</h2>
+            <div class="lane-name">${lane.name}</div>
+          </div>
+          <div class="compact-metrics">
+            <div class="metric">
+              <span class="metric-label">Turns</span>
+              <span class="metric-value" data-metric="turns">0.0</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Tokens</span>
+              <span class="metric-value" data-metric="tokens">0</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Time</span>
+              <span class="metric-value" data-metric="time">0.0s</span>
+            </div>
+          </div>
+          <div class="steps">
+            ${lane.steps
+              .map(
+                (step) => `
+                  <div class="step">
+                    <div class="step-title">${step.title}</div>
+                  </div>
+                `,
+              )
+              .join("")}
+          </div>
+        `;
+        lanesRoot.appendChild(article);
+        return article;
+      }
+
+      const laneEls = raceData.map(renderLane);
+
+      function resetRace() {
+        if (frameId) cancelAnimationFrame(frameId);
+        frameId = 0;
+        laneEls.forEach((laneEl) => {
+          laneEl.querySelector('[data-metric="turns"]').textContent = "0.0";
+          laneEl.querySelector('[data-metric="tokens"]').textContent = "0";
+          laneEl.querySelector('[data-metric="time"]').textContent = "0.0s";
+          laneEl.querySelectorAll(".step").forEach((stepEl) => {
+            stepEl.classList.remove("active", "current");
+          });
+        });
+      }
+
+      function updateLane(lane, laneEl, globalElapsed) {
+        const laneDuration = lane.metrics.time * 1000;
+        const laneElapsed = Math.min(globalElapsed, laneDuration);
+        const effectiveElapsed = Math.max(0, laneElapsed);
+        const stepDuration =
+          lane.steps.length > 0
+            ? laneDuration / lane.steps.length
+            : laneDuration;
+        const activeSteps =
+          lane.steps.length === 0 || effectiveElapsed <= 0
+            ? 0
+            : Math.min(
+                lane.steps.length,
+                Math.ceil(effectiveElapsed / stepDuration),
+              );
+        const stepFraction =
+          lane.steps.length > 0 ? activeSteps / lane.steps.length : 1;
+        const tokenProgress =
+          laneDuration > 0 ? effectiveElapsed / laneDuration : 1;
+        const turnsEl = laneEl.querySelector('[data-metric="turns"]');
+        const tokensEl = laneEl.querySelector('[data-metric="tokens"]');
+        const timeEl = laneEl.querySelector('[data-metric="time"]');
+        const steps = [...laneEl.querySelectorAll(".step")];
+
+        turnsEl.textContent = formatMetric(
+          lane.metrics.turns * stepFraction,
+          "turns",
+        );
+        tokensEl.textContent = formatMetric(
+          lane.metrics.tokens * tokenProgress,
+          "tokens",
+        );
+        timeEl.textContent = formatMetric(effectiveElapsed / 1000, "time");
+
+        steps.forEach((stepEl, stepIndex) => {
+          const isActive = stepIndex < activeSteps;
+          const isCurrent =
+            isActive &&
+            stepIndex === activeSteps - 1 &&
+            effectiveElapsed < laneDuration;
+          stepEl.classList.toggle("active", isActive);
+          stepEl.classList.toggle("current", isCurrent);
+        });
+      }
+
+      function tick(now) {
+        const globalElapsed = now - raceStart;
+
+        raceData.forEach((lane, laneIndex) => {
+          updateLane(lane, laneEls[laneIndex], globalElapsed);
+        });
+
+        if (globalElapsed < maxLaneDuration) {
+          frameId = requestAnimationFrame(tick);
+        } else {
+          frameId = 0;
+        }
+      }
+
+      function playRace() {
+        resetRace();
+        raceStart = performance.now() + introDelay;
+        frameId = requestAnimationFrame(tick);
+      }
+
+      playRace();
+    </script>
+  </body>
+</html>
