@@ -1,5 +1,9 @@
 # AXI: Agent eXperience Interface
 
+[![Website](https://img.shields.io/badge/axi.md-Website-blue)](https://axi.md)
+[![X](https://img.shields.io/badge/X-@kunchenguid-black?logo=x)](https://x.com/kunchenguid)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/BW4aJuQhTf)
+
 <h3 align="center">10 design principles for building agent-ergonomic apps.</h3>
 
 <p align="center">
