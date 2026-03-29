@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "bench": "tsx src/cli.ts"
+    "bench": "tsx src/cli.ts",
+    "render:social": "tsx scripts/render-social-video.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

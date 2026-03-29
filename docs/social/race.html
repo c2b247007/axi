@@ -51,7 +51,7 @@
         width: min(100%, 1440px);
         min-height: 900px;
         margin: 0 auto;
-        padding: 64px 28px 28px;
+        padding: 24px;
       }
 
       .frame {
@@ -198,7 +198,6 @@
       .step.active {
         opacity: 1;
         transform: translateY(0) scale(1);
-        box-shadow: 0 16px 36px rgba(51, 39, 19, 0.08);
       }
 
       .step.current {
@@ -311,6 +310,9 @@
       const maxLaneDuration =
         Math.max(...raceData.map((lane) => lane.metrics.time)) * 1000;
       const lanesRoot = document.getElementById("lanes");
+      const searchParams = new URLSearchParams(window.location.search);
+      const captureMode = searchParams.get("capture") === "1";
+      const elapsedMs = Number(searchParams.get("elapsedMs") ?? "0");
       let raceStart = 0;
       let frameId = 0;
 
@@ -374,9 +376,9 @@
         });
       }
 
-      function updateLane(lane, laneEl, globalElapsed) {
+      function updateLane(lane, laneEl, elapsedMsValue) {
         const laneDuration = lane.metrics.time * 1000;
-        const laneElapsed = Math.min(globalElapsed, laneDuration);
+        const laneElapsed = Math.min(elapsedMsValue, laneDuration);
         const effectiveElapsed = Math.max(0, laneElapsed);
         const stepDuration =
           lane.steps.length > 0
@@ -419,12 +421,17 @@
         });
       }
 
-      function tick(now) {
-        const globalElapsed = now - raceStart;
+      function renderRace(globalElapsed) {
+        const elapsed = Math.max(0, globalElapsed);
 
         raceData.forEach((lane, laneIndex) => {
-          updateLane(lane, laneEls[laneIndex], globalElapsed);
+          updateLane(lane, laneEls[laneIndex], elapsed);
         });
+      }
+
+      function tick(now) {
+        const globalElapsed = now - raceStart;
+        renderRace(globalElapsed);
 
         if (globalElapsed < maxLaneDuration) {
           frameId = requestAnimationFrame(tick);
@@ -439,7 +446,21 @@
         frameId = requestAnimationFrame(tick);
       }
 
-      playRace();
+      window.__AXI_RACE_CAPTURE__ = {
+        maxLaneDuration,
+        setElapsedMs(value) {
+          const safeValue = Number.isFinite(value) ? value : 0;
+          resetRace();
+          renderRace(safeValue);
+        },
+      };
+
+      if (captureMode) {
+        resetRace();
+        renderRace(elapsedMs);
+      } else {
+        playRace();
+      }
     </script>
   </body>
 </html>
