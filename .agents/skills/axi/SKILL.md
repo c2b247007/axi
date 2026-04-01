@@ -162,9 +162,8 @@ help[2]:
 
 **How to integrate with each app:**
 
-- **Claude Code**: use native hooks in `~/.claude/settings.json` or project `.claude/settings.json`. Prefer `SessionStart` to inject compact context and `SessionEnd` to persist session summaries. `SessionStart` stdout or `additionalContext` is added to Claude's context, and `SessionEnd` is the right place for cleanup or memory capture
-- **Codex**: use native hooks in `~/.codex/hooks.json` or `<repo>/.codex/hooks.json`, and ensure `[features].codex_hooks = true` in `config.toml`. Prefer `SessionStart` for ambient context, `UserPromptSubmit` for prompt-time augmentation, and `Stop` for end-of-turn validation or continuation. Note that Codex hooks are experimental, current `PreToolUse`/`PostToolUse` matching is effectively `Bash`-only, and hooks are currently disabled on Windows
-- **Cross-app design**: model your integration around the same lifecycle even when the APIs differ: session-start context injection, pre-action guardrails, post-action capture, and session-end persistence. Use the app's native mechanism when available; otherwise use the nearest documented deterministic extension point rather than a prompt-only workaround
+- **Claude Code**: use native hooks in `~/.claude/settings.json` or project `.claude/settings.json`. Prefer `SessionStart` to inject compact context via stdout
+- **Codex**: use native hooks in `~/.codex/hooks.json` or `<repo>/.codex/hooks.json`, and ensure `[features].codex_hooks = true` in `config.toml`. Prefer `SessionStart` for ambient context via stdout
 
 ## 8. Content first
 
