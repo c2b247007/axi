@@ -69,6 +69,45 @@ describe("runAxiCli", () => {
     expect(home).not.toHaveBeenCalled();
   });
 
+  it("shows version for bare --version without resolving context", async () => {
+    process.argv = ["node", "tool", "--version"];
+
+    await runAxiCli({
+      description: "Manage GitHub state",
+      version: "1.2.3",
+      topLevelHelp: "top help",
+      resolveContext,
+      home,
+      commands: { issue },
+      stdout,
+    });
+
+    expect(stdout.write).toHaveBeenCalledWith("1.2.3\n");
+    expect(resolveContext).not.toHaveBeenCalled();
+    expect(home).not.toHaveBeenCalled();
+  });
+
+  it.each(["-v", "-V"])(
+    "shows version for bare %s without resolving context",
+    async (flag) => {
+      process.argv = ["node", "tool", flag];
+
+      await runAxiCli({
+        description: "Manage GitHub state",
+        version: "1.2.3",
+        topLevelHelp: "top help",
+        resolveContext,
+        home,
+        commands: { issue },
+        stdout,
+      });
+
+      expect(stdout.write).toHaveBeenCalledWith("1.2.3\n");
+      expect(resolveContext).not.toHaveBeenCalled();
+      expect(home).not.toHaveBeenCalled();
+    },
+  );
+
   it("routes command help through getCommandHelp without resolving context", async () => {
     process.argv = ["node", "tool", "issue", "--help"];
 

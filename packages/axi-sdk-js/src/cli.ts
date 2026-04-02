@@ -37,6 +37,7 @@ export interface AxiResolveContextInput {
 
 export interface AxiCliOptions<TContext = undefined> {
   description: string;
+  version?: string;
   topLevelHelp: string;
   commands: Record<string, AxiCliCommand<TContext>>;
   home: AxiCliCommand<TContext>;
@@ -84,6 +85,19 @@ export async function runAxiCli<TContext = undefined>(
 
   if (argv.length === 1 && argv[0] === "--help") {
     stdout.write(options.topLevelHelp);
+    return;
+  }
+
+  if (argv.length === 1 && isVersionFlag(argv[0])) {
+    if (!options.version) {
+      stdout.write(
+        `${renderError("Version is not configured for this tool", "VALIDATION_ERROR")}\n`,
+      );
+      process.exitCode = 2;
+      return;
+    }
+
+    stdout.write(`${options.version}\n`);
     return;
   }
 
@@ -154,6 +168,10 @@ function renderLeadingFlagError(flag: string): string {
       `Move \`${flag}\` after the command instead of before it`,
     ],
   )}\n`;
+}
+
+function isVersionFlag(flag: string): boolean {
+  return flag === "-v" || flag === "-V" || flag === "--version";
 }
 
 function installHooks(options: false | AxiCliHookOptions | undefined): void {

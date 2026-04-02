@@ -29,6 +29,7 @@ import { runAxiCli } from "axi-sdk-js";
 
 await runAxiCli({
   description: "Manage GitHub state in the current repository",
+  version: "1.2.3",
   topLevelHelp: TOP_LEVEL_HELP,
   resolveContext: ({ command, args }) =>
     command === "issue" || command === "pr"
@@ -49,9 +50,9 @@ await runAxiCli({
 
 `axi-sdk-js` is a library package. In normal use, `runAxiCli()` should be the main entry point.
 
-| API           | Description                                                                                                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `runAxiCli()` | Shared runtime for command-first dispatch, lazy context resolution, home header injection, TOON serialization, standardized errors, and automatic best-effort hook installation |
+| API           | Description                                                                                                                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runAxiCli()` | Shared runtime for command-first dispatch, bare `--help`/`--version` fast paths, lazy context resolution, home header injection, TOON serialization, standardized errors, and automatic best-effort hook installation |
 
 ### Advanced Exports
 
