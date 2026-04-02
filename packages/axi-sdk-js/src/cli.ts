@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import { AxiError, exitCodeForError } from "./errors.js";
 import {
   installSessionStartHooks,
@@ -15,13 +16,8 @@ type MaybePromise<T> = T | Promise<T>;
 
 export type AxiCliCommand<TContext> = (
   args: string[],
-  context: TContext,
+  context: TContext | undefined,
 ) => MaybePromise<AxiRenderable>;
-
-export interface AxiCliResolved<TContext> {
-  argv: string[];
-  context: TContext;
-}
 
 export interface AxiCliHookOptions {
   marker?: string;
@@ -34,8 +30,12 @@ export interface AxiCliHookOptions {
   onError?: (message: string) => void;
 }
 
+export interface AxiResolveContextInput {
+  command: string | undefined;
+  args: string[];
+}
+
 export interface AxiCliOptions<TContext = undefined> {
-  argv?: string[];
   description: string;
   topLevelHelp: string;
   commands: Record<string, AxiCliCommand<TContext>>;
@@ -43,7 +43,7 @@ export interface AxiCliOptions<TContext = undefined> {
   hooks?: false | AxiCliHookOptions;
   getCommandHelp?: (command: string) => string | null | undefined;
   initialize?: () => void;
-  resolve?: (argv: string[]) => AxiCliResolved<TContext>;
+  resolveContext?: (input: AxiResolveContextInput) => MaybePromise<TContext>;
   stdout?: { write: (chunk: string) => unknown };
   renderUnknownCommand?: (command: string) => string;
   formatError?: (error: unknown) => { output: string; exitCode: number };
@@ -80,35 +80,30 @@ export async function runAxiCli<TContext = undefined>(
   options.initialize?.();
 
   const stdout = options.stdout ?? process.stdout;
-  const argv = options.argv ?? process.argv.slice(2);
-  const resolved = options.resolve
-    ? options.resolve([...argv])
-    : ({ argv: [...argv], context: undefined } as AxiCliResolved<TContext>);
-  const args = [...resolved.argv];
-  const context = resolved.context;
+  const argv = process.argv.slice(2);
 
-  if (args.includes("--help") && args.length === 1) {
+  if (argv.length === 1 && argv[0] === "--help") {
     stdout.write(options.topLevelHelp);
     return;
   }
 
-  const command = args[0];
+  const command = argv[0];
   if (!command) {
-    if (args.includes("--help")) {
-      stdout.write(options.topLevelHelp);
-      return;
-    }
-
-    await runHandler(
-      options.home,
-      args.slice(1),
-      context,
-      stdout,
-      options,
-      true,
-    );
+    const context = await options.resolveContext?.({
+      command: undefined,
+      args: [],
+    });
+    await runHandler(options.home, [], context, stdout, options, true);
     return;
   }
+
+  if (command.startsWith("-")) {
+    stdout.write(renderLeadingFlagError(command));
+    process.exitCode = 2;
+    return;
+  }
+
+  const args = argv.slice(1);
 
   if (args.includes("--help")) {
     const help = options.getCommandHelp?.(command);
@@ -127,13 +122,14 @@ export async function runAxiCli<TContext = undefined>(
     return;
   }
 
-  await runHandler(handler, args.slice(1), context, stdout, options, false);
+  const context = await options.resolveContext?.({ command, args });
+  await runHandler(handler, args, context, stdout, options, false);
 }
 
 async function runHandler<TContext>(
   handler: AxiCliCommand<TContext>,
   args: string[],
-  context: TContext,
+  context: TContext | undefined,
   stdout: { write: (chunk: string) => unknown },
   options: AxiCliOptions<TContext>,
   isHomeView: boolean,
@@ -146,6 +142,18 @@ async function runHandler<TContext>(
     stdout.write(formatted.output);
     process.exitCode = formatted.exitCode;
   }
+}
+
+function renderLeadingFlagError(flag: string): string {
+  const bin = basename(process.argv[1] ?? "tool") || "tool";
+  return `${renderError(
+    "Flags must come after the command",
+    "VALIDATION_ERROR",
+    [
+      `Run \`${bin} <command> [args] [flags]\``,
+      `Move \`${flag}\` after the command instead of before it`,
+    ],
+  )}\n`;
 }
 
 function installHooks(options: false | AxiCliHookOptions | undefined): void {

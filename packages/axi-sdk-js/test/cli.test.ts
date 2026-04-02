@@ -21,6 +21,7 @@ describe("runAxiCli", () => {
   const originalArgv = [...process.argv];
   const stdout = { write: vi.fn(() => true) };
   const initialize = vi.fn();
+  const resolveContext = vi.fn();
   const home = vi.fn(async () => "home output");
   const issue = vi.fn(async () => "issue output");
 
@@ -36,8 +37,9 @@ describe("runAxiCli", () => {
   });
 
   it("runs initializer before dispatch", async () => {
+    process.argv = ["node", "tool"];
+
     await runAxiCli({
-      argv: [],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       initialize,
@@ -50,72 +52,112 @@ describe("runAxiCli", () => {
     expect(home).toHaveBeenCalledTimes(1);
   });
 
-  it("shows top-level help for --help", async () => {
+  it("shows top-level help for bare --help without resolving context", async () => {
+    process.argv = ["node", "tool", "--help"];
+
     await runAxiCli({
-      argv: ["--help"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
+      resolveContext,
       home,
       commands: { issue },
       stdout,
     });
 
     expect(stdout.write).toHaveBeenCalledWith("top help");
+    expect(resolveContext).not.toHaveBeenCalled();
     expect(home).not.toHaveBeenCalled();
   });
 
-  it("routes command help through getCommandHelp", async () => {
+  it("routes command help through getCommandHelp without resolving context", async () => {
+    process.argv = ["node", "tool", "issue", "--help"];
+
     await runAxiCli({
-      argv: ["issue", "--help"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       getCommandHelp: (command) =>
         command === "issue" ? "issue help" : undefined,
+      resolveContext,
       home,
       commands: { issue },
       stdout,
     });
 
     expect(stdout.write).toHaveBeenCalledWith("issue help");
+    expect(resolveContext).not.toHaveBeenCalled();
     expect(issue).not.toHaveBeenCalled();
   });
 
-  it("routes to the matching command handler", async () => {
+  it("writes a structured error when flags appear before the command", async () => {
+    process.argv = ["node", "gh-axi", "-R", "owner/name", "issue", "list"];
+
     await runAxiCli({
-      argv: ["issue", "list"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
+      resolveContext,
       home,
       commands: { issue },
       stdout,
     });
 
-    expect(issue).toHaveBeenCalledWith(["list"], undefined);
+    expect(String(stdout.write.mock.calls[0]?.[0])).toContain(
+      "Flags must come after the command",
+    );
+    expect(String(stdout.write.mock.calls[0]?.[0])).toContain("help[2]:");
+    expect(process.exitCode).toBe(2);
+    expect(resolveContext).not.toHaveBeenCalled();
+  });
+
+  it("writes structured unknown-command errors without resolving context", async () => {
+    process.argv = ["node", "tool", "wat"];
+
+    await runAxiCli({
+      description: "Manage GitHub state",
+      topLevelHelp: "top help",
+      resolveContext,
+      home,
+      commands: { issue },
+      stdout,
+    });
+
+    expect(String(stdout.write.mock.calls[0]?.[0])).toContain(
+      "Unknown command: wat",
+    );
+    expect(process.exitCode).toBe(2);
+    expect(resolveContext).not.toHaveBeenCalled();
+  });
+
+  it("routes to the matching command handler with lazy context resolution", async () => {
+    process.argv = ["node", "tool", "issue", "list", "--repo", "owner/name"];
+    resolveContext.mockReturnValue({ repo: "owner/name" });
+
+    await runAxiCli({
+      description: "Manage GitHub state",
+      topLevelHelp: "top help",
+      resolveContext,
+      home,
+      commands: { issue },
+      stdout,
+    });
+
+    expect(resolveContext).toHaveBeenCalledWith({
+      command: "issue",
+      args: ["list", "--repo", "owner/name"],
+    });
+    expect(issue).toHaveBeenCalledWith(["list", "--repo", "owner/name"], {
+      repo: "owner/name",
+    });
     expect(stdout.write).toHaveBeenCalledWith("issue output\n");
   });
 
-  it("defaults argv from process.argv", async () => {
-    process.argv = ["node", "tool", "issue", "list"];
-
-    await runAxiCli({
-      description: "Manage GitHub state",
-      topLevelHelp: "top help",
-      home,
-      commands: { issue },
-      stdout,
-    });
-
-    expect(issue).toHaveBeenCalledWith(["list"], undefined);
-  });
-
   it("serializes structured handler output at the boundary", async () => {
+    process.argv = ["node", "tool", "issue", "list"];
     issue.mockResolvedValueOnce({
       issues: [{ number: 1, title: "Fix auth", state: "open" }],
       help: ["Run tool issue view 1 for details"],
     });
 
     await runAxiCli({
-      argv: ["issue", "list"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       home,
@@ -133,7 +175,6 @@ describe("runAxiCli", () => {
     home.mockResolvedValueOnce({ browser: "no active session" });
 
     await runAxiCli({
-      argv: [],
       description: "Manage browser state in the current workspace",
       topLevelHelp: "top help",
       home,
@@ -152,11 +193,30 @@ describe("runAxiCli", () => {
     );
   });
 
+  it("resolves home context only when the home handler actually runs", async () => {
+    process.argv = ["node", "tool"];
+    resolveContext.mockReturnValue({ repo: "owner/name" });
+
+    await runAxiCli({
+      description: "Manage GitHub state",
+      topLevelHelp: "top help",
+      resolveContext,
+      home,
+      commands: { issue },
+      stdout,
+    });
+
+    expect(resolveContext).toHaveBeenCalledWith({
+      command: undefined,
+      args: [],
+    });
+    expect(home).toHaveBeenCalledWith([], { repo: "owner/name" });
+  });
+
   it("installs hooks automatically from the executable path", async () => {
     process.argv = ["node", "/Users/me/src/gh-axi/dist/bin/gh-axi.js"];
 
     await runAxiCli({
-      argv: [],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       home,
@@ -185,7 +245,6 @@ describe("runAxiCli", () => {
     process.argv = ["node", "/Users/me/src/gh-axi/dist/bin/gh-axi.js"];
 
     await runAxiCli({
-      argv: [],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       hooks: false,
@@ -197,26 +256,13 @@ describe("runAxiCli", () => {
     expect(installSessionStartHooks).not.toHaveBeenCalled();
   });
 
-  it("supports preprocessing argv and context", async () => {
-    await runAxiCli({
-      argv: ["--repo", "owner/name", "issue", "list"],
-      description: "Manage GitHub state",
-      topLevelHelp: "top help",
-      home,
-      commands: { issue },
-      resolve: (argv) => ({
-        argv: argv.slice(2),
-        context: { repo: argv[1] },
-      }),
-      stdout,
-    });
+  it("does not auto-install hooks from test worker entrypoints", async () => {
+    process.argv = [
+      "node",
+      "/Users/me/src/gh-axi/node_modules/tinypool/dist/entry/process.js",
+    ];
 
-    expect(issue).toHaveBeenCalledWith(["list"], { repo: "owner/name" });
-  });
-
-  it("writes structured unknown-command errors and usage exit code", async () => {
     await runAxiCli({
-      argv: ["wat"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       home,
@@ -224,13 +270,11 @@ describe("runAxiCli", () => {
       stdout,
     });
 
-    expect(String(stdout.write.mock.calls[0]?.[0])).toContain(
-      "Unknown command: wat",
-    );
-    expect(process.exitCode).toBe(2);
+    expect(installSessionStartHooks).not.toHaveBeenCalled();
   });
 
   it("maps validation errors to exit code 2", async () => {
+    process.argv = ["node", "tool", "issue", "create"];
     issue.mockRejectedValueOnce(
       new AxiError("Missing title", "VALIDATION_ERROR", [
         'Run `tool issue create --title "..."`',
@@ -238,7 +282,6 @@ describe("runAxiCli", () => {
     );
 
     await runAxiCli({
-      argv: ["issue", "create"],
       description: "Manage GitHub state",
       topLevelHelp: "top help",
       home,

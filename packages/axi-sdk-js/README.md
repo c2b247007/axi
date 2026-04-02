@@ -15,6 +15,8 @@ Every Node-based AXI ends up redoing the same work: top-level dispatch, structur
 
 `axi-sdk-js` pulls those shared runtime pieces into one package. Your AXI can stay focused on business logic, work with plain JavaScript objects, and let the runtime handle official TOON serialization and session hook plumbing.
 
+`runAxiCli()` assumes a command-first CLI shape: `<bin> <command> ...args ...flags`. Bare `--help` is still supported, but flags are not allowed before the top-level command.
+
 ## Quick Start
 
 ```sh
@@ -28,6 +30,10 @@ import { runAxiCli } from "axi-sdk-js";
 await runAxiCli({
   description: "Manage GitHub state in the current repository",
   topLevelHelp: TOP_LEVEL_HELP,
+  resolveContext: ({ command, args }) =>
+    command === "issue" || command === "pr"
+      ? resolveRepoFromArgs(args)
+      : undefined,
   home: async () => ({
     issues: [{ number: 12, title: "Fix auth bug", state: "open" }],
     help: ["Run `gh-axi issue view <number>` for details"],
@@ -43,9 +49,9 @@ await runAxiCli({
 
 `axi-sdk-js` is a library package. In normal use, `runAxiCli()` should be the main entry point.
 
-| API           | Description                                                                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `runAxiCli()` | Shared runtime for argv handling, command dispatch, home header injection, TOON serialization, standardized errors, and automatic best-effort hook installation |
+| API           | Description                                                                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runAxiCli()` | Shared runtime for command-first dispatch, lazy context resolution, home header injection, TOON serialization, standardized errors, and automatic best-effort hook installation |
 
 ### Advanced Exports
 
