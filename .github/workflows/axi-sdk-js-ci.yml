@@ -1,0 +1,34 @@
+name: axi-sdk-js-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/axi-sdk-js/**
+      - .github/workflows/axi-sdk-js-ci.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - packages/axi-sdk-js/**
+      - .github/workflows/axi-sdk-js-ci.yml
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/axi-sdk-js/package-lock.json
+
+      - run: npm ci
+      - run: npm --prefix packages/axi-sdk-js ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm --prefix packages/axi-sdk-js run build
+      - run: npm --prefix packages/axi-sdk-js test
