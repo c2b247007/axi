@@ -1,3 +1,6 @@
+import { execFile } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { homedir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -16,6 +19,8 @@ vi.mock("../src/hooks.js", async () => {
 
 import { runAxiCli } from "../src/cli.js";
 import { AxiError } from "../src/errors.js";
+
+const execFileAsync = promisify(execFile);
 
 describe("runAxiCli", () => {
   const originalArgv = [...process.argv];
@@ -107,6 +112,25 @@ describe("runAxiCli", () => {
       expect(home).not.toHaveBeenCalled();
     },
   );
+
+  it("uses explicit argv when provided instead of process.argv", async () => {
+    process.argv = ["node", "tool", "--bogus-loader-flag", "--version"];
+
+    await runAxiCli({
+      description: "Manage GitHub state",
+      version: "1.2.3",
+      topLevelHelp: "top help",
+      resolveContext,
+      home,
+      commands: { issue },
+      stdout,
+      argv: ["--version"],
+    });
+
+    expect(stdout.write).toHaveBeenCalledWith("1.2.3\n");
+    expect(resolveContext).not.toHaveBeenCalled();
+    expect(home).not.toHaveBeenCalled();
+  });
 
   it("routes command help through getCommandHelp without resolving context", async () => {
     process.argv = ["node", "tool", "issue", "--help"];
@@ -331,4 +355,25 @@ describe("runAxiCli", () => {
     expect(String(stdout.write.mock.calls[0]?.[0])).toContain("Missing title");
     expect(process.exitCode).toBe(2);
   });
+});
+
+describe("runAxiCli subprocess integration", () => {
+  it.each(["--version", "-v", "-V"])(
+    "prints version from a real entrypoint for bare %s",
+    async (flag) => {
+      const fixturePath = fileURLToPath(
+        new URL("./fixtures/version-bin.mjs", import.meta.url),
+      );
+      const { stdout, stderr } = await execFileAsync(
+        process.execPath,
+        [fixturePath, flag],
+        {
+          cwd: new URL("..", import.meta.url),
+        },
+      );
+
+      expect(stdout).toBe("9.9.9\n");
+      expect(stderr).toBe("");
+    },
+  );
 });

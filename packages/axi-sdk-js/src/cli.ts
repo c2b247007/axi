@@ -38,6 +38,7 @@ export interface AxiResolveContextInput {
 export interface AxiCliOptions<TContext = undefined> {
   description: string;
   version?: string;
+  argv?: string[];
   topLevelHelp: string;
   commands: Record<string, AxiCliCommand<TContext>>;
   home: AxiCliCommand<TContext>;
@@ -81,7 +82,7 @@ export async function runAxiCli<TContext = undefined>(
   options.initialize?.();
 
   const stdout = options.stdout ?? process.stdout;
-  const argv = process.argv.slice(2);
+  const argv = options.argv ?? process.argv.slice(2);
 
   if (argv.length === 1 && argv[0] === "--help") {
     stdout.write(options.topLevelHelp);
