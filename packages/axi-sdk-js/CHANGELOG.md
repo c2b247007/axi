@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/kunchenguid/axi/compare/axi-sdk-js-v0.1.3...axi-sdk-js-v0.1.4) (2026-04-03)
+
+
+### Features
+
+* **cli:** add explicit argv support ([#25](https://github.com/kunchenguid/axi/issues/25)) ([7b1202b](https://github.com/kunchenguid/axi/commit/7b1202b1be9a4c1349e16630dc1b99aede827f54))
+
 ## [0.1.3](https://github.com/kunchenguid/axi/compare/axi-sdk-js-v0.1.2...axi-sdk-js-v0.1.3) (2026-04-02)
 
 
