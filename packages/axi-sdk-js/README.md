@@ -17,6 +17,8 @@ Every Node-based AXI ends up redoing the same work: top-level dispatch, structur
 
 `runAxiCli()` assumes a command-first CLI shape: `<bin> <command> ...args ...flags`. Bare `--help` is still supported, but flags are not allowed before the top-level command.
 
+If your executable boundary needs to normalize loader-specific arguments before dispatch, pass `argv` explicitly to `runAxiCli()` instead of relying on `process.argv.slice(2)`.
+
 ## Quick Start
 
 ```sh
@@ -30,6 +32,7 @@ import { runAxiCli } from "axi-sdk-js";
 await runAxiCli({
   description: "Manage GitHub state in the current repository",
   version: "1.2.3",
+  argv: process.argv.slice(2),
   topLevelHelp: TOP_LEVEL_HELP,
   resolveContext: ({ command, args }) =>
     command === "issue" || command === "pr"
