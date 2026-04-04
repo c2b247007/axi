@@ -1,0 +1,1 @@
+{"pass": true, "reason": "The agent navigated to the Python Wikipedia article, found the stable release (3.14.3) and developer link (Python Software Foundation) in the infobox, then navigated to the PSF article and correctly identified the formation date as March 6, 2001, matching the known fact."}

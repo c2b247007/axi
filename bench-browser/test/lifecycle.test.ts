@@ -35,16 +35,20 @@ describe("startDaemon", () => {
 
     expect(mockedExecSync).toHaveBeenCalledWith(
       "agent-browser install",
-      expect.objectContaining({ timeout: 30_000 }),
+      expect.objectContaining({ timeout: 300_000 }),
     );
   });
 
-  it("does nothing for auto daemon without install command", () => {
+  it("warms up auto daemon even without install command", () => {
     const condition = makeCondition({ daemon: "auto" });
 
     startDaemon(condition);
 
-    expect(mockedExecSync).not.toHaveBeenCalled();
+    // Should have called the warm-up command (agent-browser navigate about:blank)
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      "agent-browser navigate about:blank",
+      expect.objectContaining({ timeout: 15_000 }),
+    );
   });
 
   it("runs daemon_start for explicit daemon", () => {
@@ -64,6 +68,55 @@ describe("startDaemon", () => {
       "chrome-devtools-axi start",
       expect.objectContaining({ timeout: 15_000 }),
     );
+  });
+
+  it("runs install command before starting an explicit daemon", () => {
+    mockedExecSync.mockReturnValue("");
+
+    const condition = makeCondition({
+      id: "dev-browser",
+      daemon: "explicit",
+      install_command: "dev-browser install",
+      daemon_start: "dev-browser status",
+      daemon_stop: "dev-browser stop",
+    });
+
+    startDaemon(condition);
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      "dev-browser install",
+      expect.objectContaining({ timeout: 300_000 }),
+    );
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      "dev-browser status",
+      expect.objectContaining({ timeout: 15_000 }),
+    );
+  });
+
+  it("throws when a strict explicit daemon never becomes healthy", () => {
+    let now = 0;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => {
+      now += 11_000;
+      return now;
+    });
+    mockedExecSync.mockImplementation((cmd: string) => {
+      if (cmd === "dev-browser install") return "";
+      if (cmd === "dev-browser status") throw new Error("command not found");
+      if (cmd.startsWith("sleep ")) return "";
+      throw new Error(`unexpected command: ${cmd}`);
+    });
+
+    const condition = makeCondition({
+      id: "dev-browser",
+      daemon: "explicit",
+      install_command: "dev-browser install",
+      daemon_start: "dev-browser status",
+      daemon_stop: "dev-browser stop",
+      require_healthy_start: true,
+    });
+
+    expect(() => startDaemon(condition)).toThrow(/failed health check/i);
+    dateNowSpy.mockRestore();
   });
 
   it("does nothing for none daemon", () => {
@@ -167,5 +220,22 @@ describe("checkHealth", () => {
     const condition = makeCondition({ id: "chrome-devtools-mcp", daemon: "none" });
     expect(checkHealth(condition)).toBe(true);
     expect(mockedExecSync).not.toHaveBeenCalled();
+  });
+
+  it("uses dev-browser status as the health check", () => {
+    mockedExecSync.mockReturnValue("");
+
+    const condition = makeCondition({
+      id: "dev-browser",
+      daemon: "explicit",
+      daemon_start: "dev-browser status",
+      daemon_stop: "dev-browser stop",
+    });
+
+    expect(checkHealth(condition)).toBe(true);
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      "dev-browser status",
+      expect.objectContaining({ timeout: 5_000 }),
+    );
   });
 });

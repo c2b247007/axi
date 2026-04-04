@@ -1,1 +1,1 @@
-{"pass": true, "reason": "The agent navigated to both Wikipedia pages (Python and JavaScript), extracted the correct designer information from each page, and correctly reported that Python was designed by Guido van Rossum and JavaScript was designed by Brendan Eich."}
+{"pass": true, "reason": "The agent navigated to both Wikipedia pages (Python and JavaScript), extracted the designer information from the infobox on each page, and correctly reported Guido van Rossum for Python and Brendan Eich for JavaScript."}

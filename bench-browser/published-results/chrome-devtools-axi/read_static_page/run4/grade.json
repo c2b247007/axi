@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent successfully navigated to https://example.com using the correct command, found the h1 heading 'Example Domain', and reported it accurately.",
+  "judge_model": "claude-sonnet-4-6"
+}

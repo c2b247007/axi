@@ -31,8 +31,8 @@ npm test           # Run bench tests (vitest)
 ```sh
 cd bench-browser
 npm install
-npm run bench -- run --condition agent-browser --task read_static_page
-npm run bench -- matrix --repeat 5
+npm run bench -- run --condition agent-browser --task read_static_page --repeat 5
+npm run bench -- matrix --repeat 5    # full run: all conditions × all tasks × 5 repeats
 npm run bench -- report
 npm test           # Run bench tests (vitest)
 ```

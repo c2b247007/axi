@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to the Ada Lovelace Wikipedia page, found and clicked the Charles Babbage link (uid=1_181), then extracted the birth date from the Charles Babbage article infobox (uid=2_124: '26 December 1791'). The reported answer of 26 December 1791 matches the known fact."
+  "details": "The agent navigated to Ada Lovelace's Wikipedia page, found and clicked the Charles Babbage link (uid 1_181), then read the infobox from Charles Babbage's page showing '26 December 1791' as his birth date, which matches the known fact.",
+  "judge_model": "claude-sonnet-4-6"
 }

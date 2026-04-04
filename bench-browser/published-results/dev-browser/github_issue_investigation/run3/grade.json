@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent successfully navigated to the GitHub issues page for facebook/react, retrieved real issue titles with their issue numbers and URLs, and reported the open count of 820 (which is in the hundreds as expected). The 5 issue titles are specific and technical (matching real GitHub issue patterns), and the agent even verified the incomplete title of #36175 by visiting that issue directly. The answer is complete and accurate.",
+  "judge_model": "claude-sonnet-4-6"
+}

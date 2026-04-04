@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to Ada Lovelace's Wikipedia page first, attempted to click the Charles Babbage link (though the click failed to navigate), then recovered by navigating directly to Charles Babbage's page. The agent confirmed the correct birth date of 26 December 1791 from actual page content, matching the known fact. Both required pages were visited and the answer is correct and complete."
+  "details": "The agent successfully navigated to the Ada Lovelace Wikipedia page, found the Charles Babbage link, clicked it, and extracted his birth date of 26 December 1791, which matches the known fact.",
+  "judge_model": "claude-sonnet-4-6"
 }

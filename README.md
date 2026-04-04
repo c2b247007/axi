@@ -20,17 +20,17 @@ AXI is a **new paradigm** — agent-native CLI tools built from **10 design prin
 
 ### Browser Benchmark
 
-Evaluated across 560 runs (16 tasks × 7 conditions × 5 repeats) using Claude Sonnet 4.6:
+Evaluated across 490 runs (14 tasks × 7 conditions × 5 repeats) using Claude Sonnet 4.6:
 
 | Condition                      | Success  | Avg Cost   | Avg Duration | Avg Turns |
 | ------------------------------ | -------- | ---------- | ------------ | --------- |
-| **chrome-devtools-axi**        | **100%** | **$0.133** | **24.1s**    | **4.6**   |
-| **agent-browser-axi**          | **100%** | **$0.137** | **26.9s**    | **5.0**   |
-| chrome-devtools-mcp-compressed | 100%     | $0.150     | 32.6s        | 5.9       |
-| agent-browser                  | 100%     | $0.160     | 33.9s        | 7.2       |
-| chrome-devtools-mcp            | 100%     | $0.168     | 27.2s        | 5.4       |
-| chrome-devtools-mcp-code       | 99%      | $0.177     | 42.9s        | 6.6       |
-| chrome-devtools-mcp-search     | 85%      | $0.167     | 39.1s        | 7.1       |
+| **chrome-devtools-axi**        | **100%** | **$0.074** | **21.5s**    | **4.5**   |
+| dev-browser                    | 99%      | $0.078     | 28.6s        | 4.9       |
+| agent-browser                  | 99%      | $0.088     | 24.6s        | 4.8       |
+| chrome-devtools-mcp-compressed | 100%     | $0.091     | 29.7s        | 7.6       |
+| chrome-devtools-mcp-search     | 99%      | $0.096     | 29.4s        | 7.5       |
+| chrome-devtools-mcp            | 99%      | $0.101     | 26.0s        | 6.2       |
+| chrome-devtools-mcp-code       | 100%     | $0.162     | 49.4s        | 11.7      |
 
 ### GitHub Benchmark
 
@@ -109,7 +109,7 @@ npm run bench -- matrix --repeat 5
 npm run bench -- report
 ```
 
-Published results (560 runs): [`bench-browser/published-results/STUDY.md`](bench-browser/published-results/STUDY.md)
+Published results (490 runs): [`bench-browser/published-results/report.md`](bench-browser/published-results/report.md)
 
 ### GitHub Benchmark
 

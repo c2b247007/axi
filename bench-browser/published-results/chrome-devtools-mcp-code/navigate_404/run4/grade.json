@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully completed both steps. It navigated to https://httpbin.org/status/404 and correctly identified the HTTP ERROR 404 response, reporting the Chrome error page with the appropriate error message. It then navigated to https://httpbin.org/html and correctly reported the page content containing the Herman Melville - Moby-Dick excerpt, confirming normal browsing functionality after the 404 error."
+  "details": "The agent successfully completed both steps. It navigated to https://httpbin.org/status/404, correctly identified the HTTP 404 error (Chrome error page showing 'HTTP ERROR 404'), then navigated to https://httpbin.org/html and correctly reported the Moby-Dick excerpt content with the page title 'Herman Melville - Moby-Dick'. Both steps were verified through actual browser automation with snapshot evidence.",
+  "judge_model": "claude-sonnet-4-6"
 }

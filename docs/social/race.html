@@ -243,8 +243,8 @@
       <section class="frame">
         <p class="eyebrow">AXI Browser Benchmark Example</p>
         <div class="task">
-          Check two Wikipedia pages and report who designed Python and
-          JavaScript.
+          Research Rust: find its designer, GitHub stars, and tagline across
+          three sites.
         </div>
 
         <section class="lanes" id="lanes"></section>
@@ -263,12 +263,13 @@
           label: "AXI",
           name: "chrome-devtools-axi",
           color: "#0f766e",
-          metrics: { turns: 5, tokens: 160122, time: 23.0 },
+          metrics: { turns: 6, tokens: 72543, time: 17.7 },
           steps: [
-            { title: "open" },
-            { title: "open | head" },
-            { title: "open | grep" },
-            { title: "open | grep" },
+            { title: "--help | head" },
+            { title: "open --query" },
+            { title: "open --query" },
+            { title: "open --query" },
+            { title: "snapshot --query" },
             { title: "answer" },
           ],
         },
@@ -276,14 +277,15 @@
           label: "CLI",
           name: "agent-browser",
           color: "#2563eb",
-          metrics: { turns: 7, tokens: 231300, time: 34.4 },
+          metrics: { turns: 8, tokens: 117828, time: 29.0 },
           steps: [
-            { title: "navigate" },
-            { title: "snapshot | head" },
-            { title: "navigate" },
-            { title: "snapshot | grep" },
-            { title: "navigate" },
-            { title: "snapshot | grep" },
+            { title: "--help | head" },
+            { title: "open && snapshot | head" },
+            { title: "open && snapshot | head" },
+            { title: "open && snapshot | head" },
+            { title: "open && get text" },
+            { title: "eval | head" },
+            { title: "eval | head" },
             { title: "answer" },
           ],
         },
@@ -291,15 +293,19 @@
           label: "MCP",
           name: "chrome-devtools-mcp",
           color: "#b45309",
-          metrics: { turns: 9, tokens: 427660, time: 31.4 },
+          metrics: { turns: 16, tokens: 342278, time: 44.8 },
           steps: [
-            { title: "navigate_page" },
+            { title: "new_page" },
+            { title: "new_page" },
             { title: "take_snapshot" },
-            { title: "Grep" },
-            { title: "Grep" },
+            { title: "new_page" },
+            { title: "select_page" },
+            { title: "take_snapshot" },
+            { title: "select_page" },
+            { title: "take_snapshot" },
+            { title: "select_page" },
             { title: "evaluate_script" },
-            { title: "evaluate_script" },
-            { title: "navigate_page" },
+            { title: "select_page" },
             { title: "evaluate_script" },
             { title: "answer" },
           ],

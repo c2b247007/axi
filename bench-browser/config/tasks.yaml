@@ -31,14 +31,6 @@ tasks:
     grading:
       grading_hint: "torvalds/linux has 190k+ stars and the primary language is C. The star count changes over time but should be in the hundreds of thousands."
 
-  httpbin_page_read:
-    category: single_step
-    prompt: >
-      Navigate to https://httpbin.org/html and report the first sentence
-      of the text content on the page.
-    grading:
-      grading_hint: "The page contains Herman Melville's Moby Dick excerpt. The first sentence begins with 'Avast!' or refers to the Herman Melville passage. The key text is from Moby Dick by Herman Melville."
-
   wikipedia_table_read:
     category: single_step
     prompt: >
@@ -106,7 +98,7 @@ tasks:
       (https://en.wikipedia.org/wiki/List_of_Nobel_laureates_in_Physics)
       and report the winners for the 3 most recent years listed.
     grading:
-      grading_hint: "The agent must report specific laureate names for 3 recent years. The data changes as new prizes are awarded, but the agent must have extracted names from the table, not hallucinated them."
+      grading_hint: "The agent must report specific laureate names for 3 recent years. For reference: 2024 Physics Nobel went to John Hopfield and Geoffrey Hinton; 2023 to Pierre Agostini, Ferenc Krausz, and Anne L'Huillier; 2022 to Alain Aspect, John Clauser, and Anton Zeilinger. ALL co-laureates for each year must be listed — reporting only one per year is a FAIL."
 
   github_issue_investigation:
     category: investigation
@@ -115,7 +107,7 @@ tasks:
       (https://github.com/facebook/react/issues) and report the titles
       of the 5 most recent issues and the total number of open issues.
     grading:
-      grading_hint: "The agent must report 5 specific issue titles from the react repo and an approximate count of total open issues (typically in the hundreds). The titles must match actual issues visible on the page."
+      grading_hint: "The agent must report 5 specific issue titles (not generic descriptions) from the React repo. Titles should look like real GitHub issues (specific, technical). The open issue count should be in the hundreds. Generic or hallucinated titles are a FAIL."
 
   multi_site_research:
     category: investigation
@@ -148,12 +140,3 @@ tasks:
     grading:
       grading_hint: "The first URL returns a 404 error. The agent should report the error, then successfully navigate to httpbin.org/html which contains the Moby Dick excerpt. Both steps must be completed."
 
-  broken_element_interaction:
-    category: error_recovery
-    prompt: >
-      Navigate to https://example.com and try to fill in a search box
-      (which does not exist on this page). Report what happens when you
-      try to interact with a nonexistent element, then report the actual
-      content of the page.
-    grading:
-      grading_hint: "example.com has no search box or form fields. The agent should gracefully report that the element was not found or does not exist, then correctly report the page content (heading 'Example Domain' and a paragraph about IANA)."

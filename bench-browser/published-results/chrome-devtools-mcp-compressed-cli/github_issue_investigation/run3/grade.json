@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/facebook/react/issues, read the page snapshot, and correctly reported 5 issue titles matching the actual page content (verified in the trajectory snapshot), plus the total open issue count of 812. All 5 titles and their issue numbers match what was visible in the accessibility tree."
+  "details": "The agent navigated to https://github.com/facebook/react/issues, captured the page snapshot, and correctly reported 820 open issues along with 5 specific, real issue titles with accurate issue numbers and authors. The titles are specific and technical (not generic/hallucinated), matching what was visible in the page snapshot data.",
+  "judge_model": "claude-sonnet-4-6"
 }

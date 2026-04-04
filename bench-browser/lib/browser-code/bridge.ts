@@ -44,6 +44,7 @@ async function main() {
         const tools = result.tools.map((t) => ({
           name: t.name,
           description: t.description,
+          inputSchema: t.inputSchema,
         }));
         res.end(JSON.stringify(tools));
       } catch (err: any) {

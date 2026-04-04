@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to the Wikipedia World population article, successfully extracted the milestone table using JavaScript, and correctly reported all 8 billion milestones (1804, 1927, 1960, 1974, 1987, 1999, 2011, 2022) matching the known facts exactly."
+  "details": "The agent successfully navigated to the Wikipedia World population article, extracted the milestone table using browser automation, and reported all 8 billion milestones (1804, 1927, 1960, 1974, 1987, 1999, 2011, 2022) which exactly match the known facts.",
+  "judge_model": "claude-sonnet-4-6"
 }

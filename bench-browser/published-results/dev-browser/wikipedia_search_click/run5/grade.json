@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent navigated to Wikipedia's main page, searched for 'Turing Award', retrieved the article content, and correctly identified Alan Perlis as the first recipient in 1966 with accurate supporting details.",
+  "judge_model": "claude-sonnet-4-6"
+}

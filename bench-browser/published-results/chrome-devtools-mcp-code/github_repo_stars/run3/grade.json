@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to github.com/torvalds/linux, retrieved the page snapshot, and correctly extracted the star count (~225k, which is in the hundreds of thousands as expected) and the primary programming language (C at 98.0%). The data was sourced from actual browser navigation, not hallucinated."
+  "details": "The agent successfully navigated to https://github.com/torvalds/linux using browser automation tools, retrieved the page snapshot, and correctly reported the star count (227k, which is in the hundreds of thousands as expected) and the primary programming language (C at 98.0%). Both answers match the known facts.",
+  "judge_model": "claude-sonnet-4-6"
 }

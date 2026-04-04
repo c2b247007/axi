@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent navigated to the Python Wikipedia article, extracted the stable release version (3.14.3) from the infobox, found the Python Software Foundation link, navigated to the PSF article, and correctly reported the formation date of March 6, 2001, which matches the known fact.",
+  "judge_model": "claude-sonnet-4-6"
+}

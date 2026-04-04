@@ -4,6 +4,7 @@
  * Each condition has different daemon requirements:
  * - agent-browser: auto-launches daemon on first command; install once via `agent-browser install`
  * - chrome-devtools-axi: explicit `chrome-devtools-axi start` / `chrome-devtools-axi stop`
+ * - dev-browser: explicit `dev-browser status` / `dev-browser stop`
  * - chrome-devtools-mcp / -search / -compressed: no daemon — MCP server managed by Claude process
  * - chrome-devtools-mcp-code: supergateway daemon bridging chrome-devtools-mcp stdio→HTTP
  */
@@ -15,6 +16,8 @@ import type { ConditionDef } from "./types.js";
 const HEALTH_CHECK_TIMEOUT_MS = 10_000;
 /** Interval between health check retries (ms). */
 const HEALTH_CHECK_INTERVAL_MS = 500;
+/** How long to allow one-time runtime installs (browser/tool downloads). */
+const INSTALL_TIMEOUT_MS = 5 * 60 * 1000;
 /** Port for the supergateway HTTP bridge (code-mode). */
 const CODE_MODE_BRIDGE_PORT = 9223;
 
@@ -33,24 +36,36 @@ const BENCH_ROOT = resolve(import.meta.dirname, "..");
  *   starts a persistent supergateway bridge
  */
 export function startDaemon(condition: ConditionDef): void {
+  if (condition.install_command) {
+    try {
+      execSync(condition.install_command, {
+        encoding: "utf-8",
+        timeout: INSTALL_TIMEOUT_MS,
+        stdio: "pipe",
+      });
+      console.log(`  [lifecycle] Ran install: ${condition.install_command}`);
+    } catch {
+      // Install may fail if already installed; that's fine.
+      console.log(`  [lifecycle] Install already done or skipped: ${condition.install_command}`);
+    }
+  }
+
   switch (condition.daemon) {
-    case "auto":
-      // agent-browser auto-launches its daemon on first command.
-      // Run install if it hasn't been done.
-      if (condition.install_command) {
+    case "auto": {
+      // Warm up auto-daemon by triggering its first command before benchmarking starts.
+      // This ensures the daemon is ready and the first run doesn't pay cold-start latency.
+      const warmupCmd = getHealthCommand(condition);
+      if (warmupCmd) {
+        console.log(`  [lifecycle] Warming up auto-daemon: ${warmupCmd}`);
         try {
-          execSync(condition.install_command, {
-            encoding: "utf-8",
-            timeout: 30_000,
-            stdio: "pipe",
-          });
-          console.log(`  [lifecycle] Ran install: ${condition.install_command}`);
+          execSync(warmupCmd, { encoding: "utf-8", timeout: 15_000, stdio: "pipe" });
+          console.log(`  [lifecycle] Auto-daemon is warm`);
         } catch {
-          // Install may fail if already installed; that's fine.
-          console.log(`  [lifecycle] Install already done or skipped: ${condition.install_command}`);
+          console.warn(`  [lifecycle] Auto-daemon warm-up failed — will cold-start on first run`);
         }
       }
       break;
+    }
 
     case "explicit":
       if (condition.daemon_start) {
@@ -66,7 +81,10 @@ export function startDaemon(condition: ConditionDef): void {
           // Daemon may already be running
           console.log(`  [lifecycle] Daemon start note: ${execErr.stderr ?? "already running?"}`);
         }
-        waitForHealth(condition);
+        const healthy = waitForHealth(condition);
+        if (!healthy && condition.require_healthy_start) {
+          throw new Error(`Condition ${condition.id} failed health check during startup`);
+        }
       }
       break;
 
@@ -101,8 +119,21 @@ export function stopDaemon(condition: ConditionDef): void {
       break;
 
     case "auto":
+      // Kill auto-daemon processes for fresh restart
+      if (condition.id === "agent-browser") {
+        try {
+          execSync("pkill -f 'agent-browser' 2>/dev/null || true", {
+            encoding: "utf-8",
+            timeout: 5_000,
+            stdio: "pipe",
+          });
+        } catch { /* best effort */ }
+      }
+      stopBridge();
+      break;
+
     case "none":
-      // none: nothing to stop (except code-mode bridge)
+      // nothing to stop (except code-mode bridge)
       stopBridge();
       break;
   }
@@ -134,9 +165,9 @@ export function checkHealth(condition: ConditionDef): boolean {
  * Wait for daemon to become healthy, with retries.
  * Throws if health check times out.
  */
-function waitForHealth(condition: ConditionDef): void {
+function waitForHealth(condition: ConditionDef): boolean {
   const healthCmd = getHealthCommand(condition);
-  if (!healthCmd) return;
+  if (!healthCmd) return true;
 
   const deadline = Date.now() + HEALTH_CHECK_TIMEOUT_MS;
   let healthy = false;
@@ -161,6 +192,7 @@ function waitForHealth(condition: ConditionDef): void {
   } else {
     console.warn(`  [lifecycle] WARNING: Daemon health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
   }
+  return healthy;
 }
 
 /**
@@ -169,10 +201,11 @@ function waitForHealth(condition: ConditionDef): void {
 function getHealthCommand(condition: ConditionDef): string | null {
   switch (condition.id) {
     case "agent-browser":
-    case "agent-browser-axi":
       return "agent-browser navigate about:blank";
     case "chrome-devtools-axi":
       return "curl -sf http://127.0.0.1:9224/health";
+    case "dev-browser":
+      return "dev-browser status";
     default:
       return null;
   }
@@ -186,7 +219,7 @@ function startBridge(): void {
   console.log(`  [lifecycle] Starting MCP bridge on :${CODE_MODE_BRIDGE_PORT}`);
   const bridgeScript = resolve(BENCH_ROOT, "lib", "browser-code", "bridge.ts");
   bridgeProcess = spawn("npx", ["tsx", bridgeScript], {
-    stdio: ["pipe", "pipe", "inherit"],
+    stdio: "ignore",
     env: { ...process.env, BROWSER_CODE_BRIDGE_PORT: String(CODE_MODE_BRIDGE_PORT) },
     detached: true,
   });
@@ -212,9 +245,14 @@ function startBridge(): void {
 
 /** Stop the MCP bridge if running. */
 function stopBridge(): void {
-  if (bridgeProcess) {
+  if (bridgeProcess?.pid) {
     console.log(`  [lifecycle] Stopping bridge (pid ${bridgeProcess.pid})`);
-    bridgeProcess.kill();
+    // Kill the entire process group (bridge + Chrome children) since bridge is detached
+    try {
+      process.kill(-bridgeProcess.pid, "SIGTERM");
+    } catch {
+      bridgeProcess.kill();
+    }
     bridgeProcess = null;
   }
 }
@@ -222,11 +260,8 @@ function stopBridge(): void {
 /**
  * Kill orphaned Chrome/Chromium processes that may have been left behind.
  * This is a best-effort cleanup to prevent resource leaks.
- * Skipped in parallel child processes (BENCH_PARALLEL_CHILD=1) to avoid
- * killing browsers still in use by sibling conditions.
  */
 export function killOrphanedBrowsers(): void {
-  if (process.env.BENCH_PARALLEL_CHILD === "1") return;
   try {
     // Only kill headless Chrome processes that were likely spawned by the benchmark
     execSync("pkill -f 'chrome.*--headless' 2>/dev/null || true", {

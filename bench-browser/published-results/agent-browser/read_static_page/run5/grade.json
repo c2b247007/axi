@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to https://example.com, retrieved the page content showing the heading 'Example Domain', and correctly reported it as the main heading."
+  "details": "The agent navigated to https://example.com, retrieved the h1 text using 'agent-browser get text h1', and correctly reported the main heading as 'Example Domain'.",
+  "judge_model": "claude-sonnet-4-6"
 }

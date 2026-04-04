@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to the correct Wikipedia URL, captured the page snapshot, and extracted data directly from the page content (verified by the raw snapshot showing the table cells with laureate names). The agent correctly reported all three years (2023, 2024, 2025) with complete laureate names and citation descriptions, all traceable to actual page data rather than hallucination."
+  "details": "The agent successfully navigated to the Wikipedia page and extracted the correct laureates for the 3 most recent years. The 2024 and 2023 results match the known facts exactly. The agent also found a 2025 entry (John Clarke, Michel H. Devoret, John M. Martinis) which appears to have been added to the Wikipedia article after the known facts were recorded. All co-laureates for each year were fully listed.",
+  "judge_model": "claude-sonnet-4-6"
 }
