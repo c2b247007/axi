@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to Wikipedia's Main Page, attempted the search box interaction, then successfully navigated to the Turing Award article via search. The article snapshot clearly shows 'The first recipient, in 1966, was Alan Perlis' and the agent correctly reported this fact."
+  "details": "The agent successfully navigated to Wikipedia's main page, used the search box to search for 'Turing Award', landed on the Turing Award article, and correctly identified Alan Perlis as the first recipient in 1966, matching the known facts exactly.",
+  "judge_model": "claude-sonnet-4-6"
 }

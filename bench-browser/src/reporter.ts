@@ -4,7 +4,7 @@
  * Adapted from bench-github/src/reporter.ts — domain-agnostic logic.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { RunResult, ConditionId, ConditionSummary } from "./types.js";
 
@@ -21,17 +21,21 @@ function sum(arr: number[]): number {
 }
 
 function loadResults(): RunResult[] {
-  const path = join(RESULTS_DIR, "results.jsonl");
-  let raw: string;
+  let files: string[];
   try {
-    raw = readFileSync(path, "utf-8");
+    files = readdirSync(RESULTS_DIR).filter((f) => f.endsWith(".jsonl"));
   } catch {
     return [];
   }
-  return raw
-    .split("\n")
-    .filter((l) => l.trim())
-    .map((l) => JSON.parse(l) as RunResult);
+  const results: RunResult[] = [];
+  for (const file of files) {
+    const raw = readFileSync(join(RESULTS_DIR, file), "utf-8");
+    for (const line of raw.split("\n")) {
+      if (!line.trim()) continue;
+      results.push(JSON.parse(line) as RunResult);
+    }
+  }
+  return results;
 }
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
@@ -98,6 +102,41 @@ export function markdownReport(results?: RunResult[]): string {
     lines.push(
       `| ${s.condition} | ${s.total_tasks} | ${s.avg_input_tokens} | ${(s.avg_cached_pct * 100).toFixed(0)}% | ${s.avg_output_tokens} | $${s.avg_cost_usd.toFixed(4)} | $${s.total_cost_usd.toFixed(2)} | ${s.avg_duration_seconds.toFixed(1)}s | ${s.avg_turns} | ${(s.success_rate * 100).toFixed(0)}% |`,
     );
+  }
+
+  // Methodology
+  lines.push("\n## Methodology\n");
+  const models = [...new Set(all.map((r) => r.model))];
+  const judgeModels = [...new Set(all.map((r) => r.grade.judge_model).filter(Boolean))];
+  const runsPerTask = all.length > 0
+    ? Math.round(all.length / (new Set(all.map((r) => `${r.condition}:${r.task}`)).size))
+    : 0;
+  lines.push(`- **Agent model**: ${models.join(", ") || "unknown"}`);
+  lines.push(`- **Judge model**: ${judgeModels.join(", ") || "claude-opus-4-6"}`);
+  lines.push(`- **Repeats per task**: ${runsPerTask}`);
+  lines.push("- **Execution**: Sequential with randomized condition/task order");
+  lines.push("- **Browser isolation**: Fresh browser per run (daemon restarted between runs)");
+  lines.push("");
+  lines.push("### Known Limitations\n");
+  lines.push("- MCP conditions spawn Chrome per run (inherent to MCP architecture), adding ~2-5s cold-start overhead");
+  lines.push("- MCP tool schemas consume ~28.5% of input tokens — cost comparisons reflect total API cost including schema overhead");
+  lines.push("- `--disallowedTools` removes tools from use but not from the tool list visible to agents");
+  lines.push("");
+
+  // Failure analysis
+  const failures = all.filter((r) => !r.grade.task_success);
+  if (failures.length > 0) {
+    lines.push("### Failure Analysis\n");
+    const byReason = groupBy(
+      failures,
+      (r) => (r.grade.failure_reason as string) ?? "unknown",
+    );
+    lines.push("| Failure Type | Count |");
+    lines.push("|-------------|-------|");
+    for (const [reason, runs] of byReason) {
+      lines.push(`| ${reason} | ${runs.length} |`);
+    }
+    lines.push("");
   }
 
   // Per-task breakdown

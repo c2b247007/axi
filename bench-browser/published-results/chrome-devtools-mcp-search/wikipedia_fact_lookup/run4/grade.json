@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to the correct Wikipedia Moon page, extracted the orbital speed data from the infobox (finding '1.022 km/s' in the snapshot), and correctly reported the Moon's average orbital speed as 1.022 km/s."
+  "details": "The agent navigated to the correct Wikipedia page for the Moon, extracted the orbital speed data from the infobox using a script query, and correctly reported 1.022 km/s matching the known fact.",
+  "judge_model": "claude-sonnet-4-6"
 }

@@ -7,11 +7,14 @@
  * Adapted from bench-github/src/grader.ts — domain-agnostic logic.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import type { GradingSpec, GradeResult } from "./types.js";
 
 const CLAUDE_JUDGE_MODEL = "claude-sonnet-4-6";
+const MAX_JUDGE_RETRIES = 3;
+const JUDGE_RETRY_BACKOFF_MS = [10_000, 30_000, 60_000];
+const TOOL_OUTPUT_LIMIT = 30_000;
 
 
 /**
@@ -61,13 +64,16 @@ export function formatTrajectory(jsonl: string): string {
         for (const block of content) {
           if (block.type === "tool_result") {
             if (typeof block.content === "string") {
-              parts.push(`OUTPUT: ${block.content}`);
+              const truncated = block.content.length > TOOL_OUTPUT_LIMIT;
+              parts.push(`OUTPUT: ${block.content.slice(0, TOOL_OUTPUT_LIMIT)}${truncated ? ` [TRUNCATED from ${block.content.length} chars]` : ""}`);
             } else if (Array.isArray(block.content)) {
-              // MCP tool results return an array of {type, text} objects
+              // MCP tool results return an array of {type, text|image} objects
               const text = (block.content as Array<Record<string, unknown>>)
+                .filter((c) => c.type !== "image") // Skip base64 image data
                 .map((c) => (typeof c.text === "string" ? c.text : JSON.stringify(c)))
                 .join("\n");
-              parts.push(`OUTPUT: ${text}`);
+              const truncated = text.length > TOOL_OUTPUT_LIMIT;
+              parts.push(`OUTPUT: ${text.slice(0, TOOL_OUTPUT_LIMIT)}${truncated ? ` [TRUNCATED from ${text.length} chars]` : ""}`);
             }
             parts.push("");
           }
@@ -82,7 +88,13 @@ export function formatTrajectory(jsonl: string): string {
     }
   }
 
-  return parts.join("\n").trim() || "(empty trajectory)";
+  const raw = parts.join("\n").trim();
+  // Strip <system-reminder> tags that leak from Read tool outputs into the trajectory
+  const sanitized = raw.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "[system content stripped]")
+    // Strip null bytes — MCP tool outputs sometimes contain them, and they cause
+    // ERR_INVALID_ARG_VALUE when the prompt is passed as a CLI argument.
+    .replace(/\0/g, "");
+  return sanitized || "(empty trajectory)";
 }
 
 /**
@@ -125,26 +137,45 @@ export function grade(
   const trajectory = formatTrajectory(rawJsonl);
   const prompt = buildGradingPrompt(taskPrompt, trajectory, spec.grading_hint);
 
-  let judgeOutput: string;
-  try {
-    judgeOutput = execFileSync(
-      "claude",
-      ["--setting-sources", "", "-p", prompt, "--model", CLAUDE_JUDGE_MODEL, "--output-format", "text", "--max-turns", "1", "--dangerously-skip-permissions", "--no-session-persistence"],
-      {
-        encoding: "utf-8",
-        timeout: 60 * 1000,
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
-  } catch (err: unknown) {
-    const execErr = err as { stdout?: string; stderr?: string };
-    judgeOutput = execErr.stdout ?? "";
-    if (!judgeOutput) {
-      return {
-        task_success: false,
-        details: `Judge process failed: ${execErr.stderr ?? "unknown error"}`,
-      };
+  let judgeOutput: string = "";
+  let lastError: string = "";
+
+  for (let attempt = 0; attempt <= MAX_JUDGE_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const backoffMs = JUDGE_RETRY_BACKOFF_MS[attempt - 1] ?? 60_000;
+      console.log(`  [grader] Retry ${attempt}/${MAX_JUDGE_RETRIES} after ${backoffMs / 1000}s backoff...`);
+      execSync(`sleep ${backoffMs / 1000}`, { stdio: "pipe" });
     }
+
+    try {
+      judgeOutput = execFileSync(
+        "claude",
+        ["--setting-sources", "", "-p", prompt, "--model", CLAUDE_JUDGE_MODEL, "--output-format", "text", "--max-turns", "1", "--dangerously-skip-permissions", "--no-session-persistence"],
+        {
+          encoding: "utf-8",
+          timeout: 120 * 1000,
+          maxBuffer: 50 * 1024 * 1024,
+          stdio: ["pipe", "pipe", "pipe"],
+        },
+      );
+      break; // Success
+    } catch (err: unknown) {
+      const execErr = err as { stdout?: string; stderr?: string };
+      judgeOutput = execErr.stdout ?? "";
+      lastError = execErr.stderr ?? "unknown error";
+      // If we got stdout content, treat as valid even on non-zero exit
+      if (judgeOutput) break;
+      // Otherwise retry
+    }
+  }
+
+  if (!judgeOutput) {
+    return {
+      task_success: false,
+      details: `Judge process failed after ${MAX_JUDGE_RETRIES} retries: ${lastError}`,
+      failure_reason: "judge_error",
+      judge_model: CLAUDE_JUDGE_MODEL,
+    };
   }
 
   // Save judge trajectory for auditability
@@ -158,12 +189,16 @@ export function grade(
     return {
       task_success: false,
       details: `Could not parse judge verdict from output: ${judgeOutput.slice(0, 500)}`,
+      failure_reason: "judge_parse_error",
+      judge_model: CLAUDE_JUDGE_MODEL,
     };
   }
 
   return {
     task_success: verdict.pass,
     details: verdict.reason,
+    failure_reason: verdict.pass ? undefined : "task_failure",
+    judge_model: CLAUDE_JUDGE_MODEL,
   };
 }
 

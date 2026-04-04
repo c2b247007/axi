@@ -1,1 +1,1 @@
-{"pass": true, "reason": "The agent navigated to https://github.com/torvalds/linux, retrieved the snapshot showing 225k stars and C as the primary language (98.0%), and correctly reported both facts."}
+{"pass": true, "reason": "The agent successfully navigated to https://github.com/torvalds/linux, captured the accessibility tree showing '227k' stars and 'C 98.0%' as the primary language, and reported both facts accurately. The star count (227k) is consistent with the known facts (190k+), and the primary language (C) is correct."}

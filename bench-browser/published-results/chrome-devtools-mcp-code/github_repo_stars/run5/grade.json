@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/torvalds/linux, obtained a page snapshot showing 225k stars and C as the primary language (98.0%), and reported both values correctly."
+  "details": "The agent successfully navigated to https://github.com/torvalds/linux using browser automation, retrieved the actual page content via snapshot, and correctly reported ~227k stars (consistent with 190k+ known facts) and C as the primary programming language.",
+  "judge_model": "claude-sonnet-4-6"
 }

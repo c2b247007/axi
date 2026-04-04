@@ -22,3 +22,5 @@ docs/blog.md
 
 # OS
 .DS_Store
+
+.gnhf/runs/

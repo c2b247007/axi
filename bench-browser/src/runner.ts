@@ -11,16 +11,32 @@
  */
 
 import { execFileSync, execSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import type { RunSpec, RunResult, ConditionDef, TaskDef } from "./types.js";
 import { parseClaudeJsonl } from "./usage.js";
 import { grade } from "./grader.js";
+import { validateCommandPolicy } from "./validation.js";
 
 const BENCH_ROOT = resolve(import.meta.dirname, "..");
 const RESULTS_DIR = join(BENCH_ROOT, "results");
 
+function makeBrowserName(spec: Pick<RunSpec, "condition" | "task" | "run">): string {
+  const raw = `axi-bench-${spec.condition}-${spec.task}-run${spec.run}`;
+  return raw.replace(/[^a-zA-Z0-9._-]/g, "-");
+}
+
+export function renderAgentsMd(
+  spec: Pick<RunSpec, "condition" | "task" | "run">,
+  condition: Pick<ConditionDef, "agents_md">,
+): string {
+  const browserName = makeBrowserName(spec);
+  const devBrowserCommand = `dev-browser --headless --browser ${browserName}`;
+  return condition.agents_md
+    .replaceAll("__AXI_BENCH_BROWSER_NAME__", browserName)
+    .replaceAll("__AXI_BENCH_DEV_BROWSER_CMD__", devBrowserCommand);
+}
 
 export function runOne(
   spec: RunSpec,
@@ -36,7 +52,10 @@ export function runOne(
 
   try {
     mkdirSync(workspaceDir, { recursive: true });
-    writeFileSync(join(workspaceDir, "CLAUDE.md"), condition.agents_md);
+    const agentsMd = renderAgentsMd(spec, condition);
+    // Written for workspace auditability only — not read by Claude (--setting-sources "" disables auto-discovery).
+    // Agent receives this content via --append-system-prompt instead.
+    writeFileSync(join(workspaceDir, "CLAUDE.md"), agentsMd);
 
     // Write MCP config for chrome-devtools-mcp condition
     if (condition.mcp_config) {
@@ -51,15 +70,23 @@ export function runOne(
     const emptyMcpConfigPath = join(artifactDir, ".empty-mcp-config.json");
     writeFileSync(emptyMcpConfigPath, JSON.stringify({ mcpServers: {} }));
 
-    // Copy browser-code wrapper library into workspace for code-mode condition
+    // Code-mode setup: copy browser-code client library, then run codegen
+    // to generate strongly-typed MCP wrappers under servers/chrome-devtools/.
     if (spec.condition === "chrome-devtools-mcp-code") {
       const browserCodeSrc = join(BENCH_ROOT, "lib", "browser-code");
       const browserCodeDst = join(workspaceDir, "browser-code");
       execSync(`cp -r ${browserCodeSrc} ${browserCodeDst}`, { stdio: "pipe" });
+
+      const codegenScript = join(BENCH_ROOT, "lib", "browser-code", "codegen.ts");
+      const serversDir = join(workspaceDir, "servers", "chrome-devtools");
+      execSync(`npx tsx ${codegenScript} ${serversDir}`, {
+        stdio: "pipe",
+        timeout: 30_000,
+      });
     }
 
     // 3. Run agent
-    const { agentOutput, wallClockSeconds } = runAgent(spec, condition, task, artifactDir, workspaceDir);
+    const { agentOutput, wallClockSeconds } = runAgent(spec, condition, task, artifactDir, workspaceDir, agentsMd);
 
     // Save raw output
     writeFileSync(join(artifactDir, "agent_output.txt"), agentOutput);
@@ -71,7 +98,14 @@ export function runOne(
     const finalOutput = extractClaudeFinalOutput(agentOutput);
 
     // 5. Grade — pass raw JSONL so the judge sees the full trajectory
-    const gradeResult = grade(task.grading, task.prompt, agentOutput, artifactDir);
+    const usageValidationError = validateCommandPolicy(condition, usage.command_log, agentOutput);
+    const gradeResult = usageValidationError
+      ? {
+          task_success: false,
+          details: usageValidationError,
+          failure_reason: "policy_violation" as const,
+        }
+      : grade(task.grading, task.prompt, agentOutput, artifactDir);
     writeFileSync(join(artifactDir, "grade.json"), JSON.stringify(gradeResult, null, 2));
 
     // 6. Build result
@@ -86,9 +120,21 @@ export function runOne(
       agent_output: finalOutput.slice(0, 2000), // Truncate for JSONL
     };
 
-    // 7. Append to results.jsonl
-    const resultsJsonl = join(RESULTS_DIR, "results.jsonl");
-    appendFileSync(resultsJsonl, JSON.stringify(result) + "\n");
+    // 7. Upsert into per-condition results file
+    const conditionJsonl = join(RESULTS_DIR, `${spec.condition}.jsonl`);
+    if (existsSync(conditionJsonl)) {
+      const kept = readFileSync(conditionJsonl, "utf-8")
+        .split("\n")
+        .filter((l) => {
+          if (!l.trim()) return false;
+          try {
+            const r = JSON.parse(l) as { task: string; run: number };
+            return !(r.task === spec.task && r.run === spec.run);
+          } catch { return true; }
+        });
+      writeFileSync(conditionJsonl, kept.length > 0 ? kept.join("\n") + "\n" : "");
+    }
+    appendFileSync(conditionJsonl, JSON.stringify(result) + "\n");
 
     return result;
   } finally {
@@ -135,6 +181,7 @@ function runAgent(
   task: TaskDef,
   artifactDir: string,
   workspaceDir: string,
+  agentsMd: string,
 ): { agentOutput: string; wallClockSeconds: number } {
   // Build Claude CLI args array (using execFileSync to avoid shell interpretation
   // of backticks and angle brackets in the system prompt)
@@ -146,18 +193,23 @@ function runAgent(
     "--verbose",
     "--dangerously-skip-permissions",
     "--no-session-persistence",
-    "--append-system-prompt", condition.agents_md,
+    "--append-system-prompt", agentsMd,
     "--disable-slash-commands",
   ];
+
+  // All conditions: disallow WebFetch/WebSearch so agents must use the
+  // designated browser tool, not built-in fetch capabilities.
+  const disallowedTools: string[] = ["WebFetch", "WebSearch"];
 
   if (condition.id === "chrome-devtools-mcp") {
     // MCP without ToolSearch: tools loaded upfront into context
     const mcpConfigPath = join(artifactDir, ".mcp-config.json");
+    disallowedTools.push("ToolSearch");
     args.push(
       "--strict-mcp-config",
       "--mcp-config", mcpConfigPath,
       "--allowedTools", "Read,Write",
-      "--disallowedTools", "ToolSearch",
+      "--disallowedTools", disallowedTools.join(","),
     );
   } else if (condition.id === "chrome-devtools-mcp-search") {
     // MCP with ToolSearch: tools discovered on demand
@@ -166,6 +218,7 @@ function runAgent(
       "--strict-mcp-config",
       "--mcp-config", mcpConfigPath,
       "--allowedTools", "Read,Write",
+      "--disallowedTools", disallowedTools.join(","),
     );
   } else if (condition.id === "chrome-devtools-mcp-code") {
     // Code execution: agent writes TypeScript scripts using browser-code library.
@@ -175,6 +228,7 @@ function runAgent(
       "--strict-mcp-config",
       "--mcp-config", emptyMcpConfigPath,
       "--allowedTools", "Bash,Read,Write",
+      "--disallowedTools", disallowedTools.join(","),
     );
   } else if (condition.mcp_compressor) {
     // MCP Compressor wrapper mode: wraps backend MCP server via uvx mcp-compressor.
@@ -209,6 +263,7 @@ function runAgent(
       "--strict-mcp-config",
       "--mcp-config", mcpConfigPath,
       "--allowedTools", allowedTools,
+      "--disallowedTools", disallowedTools.join(","),
     );
   } else {
     // CLI conditions: --strict-mcp-config with empty config prevents user's
@@ -218,6 +273,7 @@ function runAgent(
       "--strict-mcp-config",
       "--mcp-config", emptyMcpConfigPath,
       "--allowedTools", "Bash,Read,Write",
+      "--disallowedTools", disallowedTools.join(","),
     );
   }
 
@@ -227,6 +283,7 @@ function runAgent(
     agentOutput = execFileSync("claude", args, {
       encoding: "utf-8",
       timeout: 5 * 60 * 1000,
+      maxBuffer: 50 * 1024 * 1024, // 50MB — screenshots produce large base64 output
       stdio: ["pipe", "pipe", "pipe"],
       env: { ...process.env },
       cwd: workspaceDir,

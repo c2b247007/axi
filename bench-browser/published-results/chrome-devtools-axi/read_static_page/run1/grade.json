@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent navigated to https://example.com using the chrome-devtools-axi tool, found the h1 heading 'Example Domain' in the page snapshot, and correctly reported it as the main heading.",
+  "judge_model": "claude-sonnet-4-6"
+}

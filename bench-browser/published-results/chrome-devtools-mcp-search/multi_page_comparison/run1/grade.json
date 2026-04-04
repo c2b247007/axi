@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to both Wikipedia pages (Python programming language and JavaScript), extracted the correct designer information from each page, and correctly reported that Python was designed by Guido van Rossum and JavaScript was designed by Brendan Eich."
+  "details": "The agent navigated to both Wikipedia pages (Python programming language and JavaScript), extracted the designer information from the infoboxes, and correctly reported Guido van Rossum for Python and Brendan Eich for JavaScript.",
+  "judge_model": "claude-sonnet-4-6"
 }

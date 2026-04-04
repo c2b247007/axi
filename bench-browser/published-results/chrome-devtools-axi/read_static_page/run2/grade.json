@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent successfully navigated to https://example.com using the correct 'open' command, found the main heading 'Example Domain' in the page snapshot, and reported it accurately.",
+  "judge_model": "claude-sonnet-4-6"
+}

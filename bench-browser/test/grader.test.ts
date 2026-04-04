@@ -4,6 +4,7 @@ import * as child_process from "node:child_process";
 
 vi.mock("node:child_process", () => ({
   execFileSync: vi.fn(),
+  execSync: vi.fn(),
 }));
 
 const mockedExecFileSync = vi.mocked(child_process.execFileSync);

@@ -1,4 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to the correct Wikipedia page, extracted the table data accurately, and correctly identified the top 3 countries by population as India (1,417,492,000), China (1,404,890,000), and United States (341,784,857), matching the known facts."
+  "details": "The agent navigated to the correct Wikipedia URL, extracted the data via JavaScript evaluation, and correctly reported India (#1), China (#2), and United States (#3) with accurate population figures matching the known facts.",
+  "judge_model": "claude-sonnet-4-6"
 }

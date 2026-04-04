@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent successfully navigated to the Wikipedia page and extracted complete, accurate data for the 3 most recent years. The 2024 and 2023 results match the known facts exactly. The 2025 entry (John Clarke, Michel H. Devoret, John M. Martinis) reflects what was listed on the page at the time of access, which is more recent data than the reference facts provided. All co-laureates for each year were listed completely.",
+  "judge_model": "claude-sonnet-4-6"
+}

@@ -1,0 +1,5 @@
+{
+  "task_success": true,
+  "details": "The agent navigated to https://example.com using browser automation, extracted the h1 heading, and correctly reported 'Example Domain' as the main heading.",
+  "judge_model": "claude-sonnet-4-6"
+}

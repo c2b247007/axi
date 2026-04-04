@@ -1,6 +1,6 @@
 /** Shared interfaces for the browser benchmark harness. */
 
-export type ConditionId = "agent-browser" | "agent-browser-axi" | "chrome-devtools-axi" | "chrome-devtools-mcp" | "chrome-devtools-mcp-search" | "chrome-devtools-mcp-code" | "chrome-devtools-mcp-compressed-cli";
+export type ConditionId = "agent-browser" | "chrome-devtools-axi" | "chrome-devtools-mcp" | "chrome-devtools-mcp-search" | "chrome-devtools-mcp-code" | "chrome-devtools-mcp-compressed-cli" | "dev-browser";
 export type TaskCategory = "single_step" | "multi_step" | "investigation" | "error_recovery";
 
 export interface GradingSpec {
@@ -22,6 +22,8 @@ export interface ConditionDef {
   agents_md: string;
   /** Daemon management mode: "auto" (self-managed), "explicit" (start/stop), "none" (MCP-managed). */
   daemon: "auto" | "explicit" | "none";
+  /** Abort the run if daemon startup/health verification fails. */
+  require_healthy_start?: boolean;
   /** One-time install command (agent-browser). */
   install_command?: string;
   /** Explicit daemon start command. */
@@ -36,6 +38,12 @@ export interface ConditionDef {
     server_name?: string;
     cli_mode?: boolean;
     backend_command?: string[];
+  };
+  /** Optional Bash command policy for validating that the intended tool was used. */
+  command_policy?: {
+    require_any_prefix?: string[];
+    forbid_any_prefix?: string[];
+    forbid_substrings?: string[];
   };
 }
 
@@ -63,6 +71,10 @@ export interface UsageMetrics {
 export interface GradeResult {
   task_success: boolean;
   details: string;
+  /** Classification of failure cause. */
+  failure_reason?: "judge_error" | "judge_parse_error" | "policy_violation" | "task_failure";
+  /** Which model was used to grade this run. */
+  judge_model?: string;
 }
 
 export interface RunResult {
