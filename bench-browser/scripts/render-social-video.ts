@@ -1,18 +1,16 @@
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
-import {
-  access,
-  cp,
-  mkdir,
-  mkdtemp,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { once } from "node:events";
+
+import {
+  buildTimestampedName,
+  expandViewportToFitClip,
+} from "../src/social-video.js";
 
 type Options = {
   mp4Fps: number;
@@ -188,7 +186,10 @@ async function waitForJson<T>(url: string, predicate: (value: T) => boolean) {
 class CdpClient {
   private ws: WebSocket;
   private nextId = 1;
-  private pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
+  private pending = new Map<
+    number,
+    { resolve: (value: any) => void; reject: (error: Error) => void }
+  >();
   private eventWaiters = new Map<string, Array<(params: any) => void>>();
 
   constructor(wsUrl: string) {
@@ -292,17 +293,26 @@ async function settlePage(cdp: CdpClient) {
 }
 
 async function evaluateNumber(cdp: CdpClient, expression: string) {
-  const result = await cdp.send<{ result: { value: number } }>("Runtime.evaluate", {
-    expression,
-    returnByValue: true,
-  });
+  const result = await cdp.send<{ result: { value: number } }>(
+    "Runtime.evaluate",
+    {
+      expression,
+      returnByValue: true,
+    },
+  );
   return result.result.value;
 }
 
 async function evaluateClip(cdp: CdpClient) {
   const result = await cdp.send<{
     result: {
-      value: { x: number; y: number; width: number; height: number; scale: number };
+      value: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        scale: number;
+      };
     };
   }>("Runtime.evaluate", {
     expression: `(() => {
@@ -333,6 +343,7 @@ async function evaluateClip(cdp: CdpClient) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const captureFps = Math.max(options.mp4Fps, options.gifFps);
+  const outputName = buildTimestampedName(options.name);
   await mkdir(options.outputDir, { recursive: true });
 
   const server = await startStaticServer();
@@ -345,10 +356,15 @@ async function main() {
   try {
     const targets = await waitForJson<JsonTarget[]>(
       `http://127.0.0.1:${debugPort}/json/list`,
-      (payload) => payload.some((target) => target.type === "page" && Boolean(target.webSocketDebuggerUrl)),
+      (payload) =>
+        payload.some(
+          (target) =>
+            target.type === "page" && Boolean(target.webSocketDebuggerUrl),
+        ),
     );
     const pageTarget = targets.find(
-      (target) => target.type === "page" && Boolean(target.webSocketDebuggerUrl),
+      (target) =>
+        target.type === "page" && Boolean(target.webSocketDebuggerUrl),
     );
 
     if (!pageTarget?.webSocketDebuggerUrl) {
@@ -371,7 +387,25 @@ async function main() {
     await cdp.send("Page.navigate", { url: pageUrl });
     await loadEvent;
     await settlePage(cdp);
-    const clip = await evaluateClip(cdp);
+    let clip = await evaluateClip(cdp);
+    const expandedViewport = expandViewportToFitClip(
+      { width: options.width, height: options.height },
+      clip,
+    );
+
+    if (
+      expandedViewport.width !== options.width ||
+      expandedViewport.height !== options.height
+    ) {
+      await cdp.send("Emulation.setDeviceMetricsOverride", {
+        width: expandedViewport.width,
+        height: expandedViewport.height,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      await settlePage(cdp);
+      clip = await evaluateClip(cdp);
+    }
 
     const maxLaneDuration = await evaluateNumber(
       cdp,
@@ -389,11 +423,14 @@ async function main() {
       });
       await settlePage(cdp);
 
-      const screenshot = await cdp.send<{ data: string }>("Page.captureScreenshot", {
-        format: "png",
-        captureBeyondViewport: false,
-        clip,
-      });
+      const screenshot = await cdp.send<{ data: string }>(
+        "Page.captureScreenshot",
+        {
+          format: "png",
+          captureBeyondViewport: true,
+          clip,
+        },
+      );
       const framePath = join(
         framesDir,
         `${String(frameIndex).padStart(5, "0")}.png`,
@@ -405,7 +442,7 @@ async function main() {
       }
     }
 
-    const mp4Path = join(options.outputDir, `${options.name}.mp4`);
+    const mp4Path = join(options.outputDir, `${outputName}.mp4`);
     await runProcess("/opt/homebrew/bin/ffmpeg", [
       "-y",
       "-framerate",
@@ -423,7 +460,7 @@ async function main() {
 
     if (!options.skipGif) {
       const palettePath = join(tempDir, "palette.png");
-      const gifPath = join(options.outputDir, `${options.name}.gif`);
+      const gifPath = join(options.outputDir, `${outputName}.gif`);
 
       await runProcess("/opt/homebrew/bin/ffmpeg", [
         "-y",
@@ -455,7 +492,7 @@ async function main() {
     }
 
     if (options.keepFrames) {
-      const savedFramesDir = join(options.outputDir, `${options.name}-frames`);
+      const savedFramesDir = join(options.outputDir, `${outputName}-frames`);
       await rm(savedFramesDir, { recursive: true, force: true });
       await cp(framesDir, savedFramesDir, { recursive: true });
     }
@@ -463,7 +500,7 @@ async function main() {
     cdp.close();
     console.log(`Wrote ${mp4Path}`);
     if (!options.skipGif) {
-      console.log(`Wrote ${join(options.outputDir, `${options.name}.gif`)}`);
+      console.log(`Wrote ${join(options.outputDir, `${outputName}.gif`)}`);
     }
   } finally {
     chrome.kill("SIGKILL");

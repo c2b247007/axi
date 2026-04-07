@@ -16,6 +16,7 @@ bench-browser/results/
 
 # Blog draft (not version-controlled)
 docs/blog.md
+docs/social/rendered/
 
 # Desloppify
 .desloppify/
