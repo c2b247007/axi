@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to the Wikipedia page, correctly handled the rowspan table structure to extract all co-laureates, and reported complete results. For 2024 (Hopfield & Hinton) and 2023 (Agostini, Krausz, L'Huillier), results match the known facts exactly. The agent also reported 2025 as the most recent year (consistent with today's date of April 2026), with all co-laureates listed. All years include complete laureate lists with no partial answers.",
+  "details": "The agent successfully navigated to the correct Wikipedia page and extracted complete, accurate data for the 3 most recent years. For 2024: John J. Hopfield and Geoffrey Hinton (matches known facts). For 2023: Pierre Agostini, Ferenc Krausz, and Anne L'Huillier (matches known facts). The agent correctly identified 2025 as the most recent year on the page (Wikipedia was last edited March 2026) and listed all three co-laureates. All co-laureates for each year were fully reported.",
   "judge_model": "claude-sonnet-4-6"
 }

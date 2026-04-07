@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to the Wikipedia article, extracted the laureate data using browser automation scripts, and reported complete and correct information for the 3 most recent years. The 2023 winners (Pierre Agostini, Ferenc Krausz, Anne L'Huillier) and 2024 winners (John J. Hopfield, Geoffrey Hinton) match the known facts exactly. The 2025 winners (John Clarke, Michel H. Devoret, John M. Martinis) were reported from the live Wikipedia page, which had been updated since the known facts were recorded. All co-laureates for each year were listed completely.",
+  "details": "The agent successfully navigated to the Wikipedia page and extracted complete data for the 3 most recent years (2025, 2024, 2023). The 2024 winners (John J. Hopfield and Geoffrey Hinton) and 2023 winners (Pierre Agostini, Ferenc Krausz, Anne L'Huillier) match the known facts exactly. The page also included 2025 data (John Clarke, Michel H. Devoret, John M. Martinis), which the agent correctly reported as the most recent year. All co-laureates for each year were listed, satisfying the completeness requirement.",
   "judge_model": "claude-sonnet-4-6"
 }

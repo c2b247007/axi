@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/torvalds/linux, retrieved the page snapshot showing '227k' stars (uid=43_34) and correctly identified C as the primary language. The answer is accurate and complete.",
+  "details": "The agent navigated to https://github.com/torvalds/linux, retrieved the page snapshot, and correctly identified 227k stars and C as the primary language (98.0%). Both values match the known facts (190k+ stars, primary language C).",
   "judge_model": "claude-sonnet-4-6"
 }

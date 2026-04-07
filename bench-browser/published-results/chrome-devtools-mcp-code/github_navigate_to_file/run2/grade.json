@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent navigated to https://github.com/torvalds/linux/blob/master/Makefile, took a snapshot of the page, and correctly read VERSION = 7 and PATCHLEVEL = 0 from the actual file content visible in the snapshot. The answer was not hallucinated — the raw file content was captured in the accessibility tree textbox showing 'VERSION = 7' and 'PATCHLEVEL = 0' explicitly.",
+  "details": "The agent navigated to the GitHub repository and then fetched the raw Makefile content from raw.githubusercontent.com. The snapshot clearly shows VERSION = 7 and PATCHLEVEL = 0 in the actual file content. The agent correctly reported these values along with additional context (SUBLEVEL = 0, EXTRAVERSION = -rc7, NAME = Baby Opossum Posse). The data was read from the actual page, not hallucinated.",
   "judge_model": "claude-sonnet-4-6"
 }

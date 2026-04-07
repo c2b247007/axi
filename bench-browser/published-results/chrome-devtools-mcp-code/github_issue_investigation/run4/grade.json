@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/facebook/react/issues using browser automation, retrieved real page content via accessibility tree snapshot, and reported accurate data: 820 open issues and 5 specific, technically plausible issue titles with correct issue numbers (#36201, #36200, #36176, #36175, #36169) and dates. The titles are specific and match real GitHub issue patterns. Issue #36175 has an incomplete title ('Bug:') but this reflects the actual page content, not hallucination. The open issue count (820) is in the hundreds as expected.",
+  "details": "The agent successfully navigated to the GitHub React issues page using browser automation, extracted real data including the open issue count (825, which is in the hundreds as expected), and reported 5 specific issue titles with their issue numbers. The titles are technically specific and real-looking (compiler bugs, specific error messages), matching what would appear on GitHub. Issues #36211 and #36206 having 'Bug:' as titles is plausible for spam/low-quality issues. The agent used actual browser automation rather than hallucinating data.",
   "judge_model": "claude-sonnet-4-6"
 }

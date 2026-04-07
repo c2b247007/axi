@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated all three sites using browser automation tools. From Wikipedia, it correctly identified Graydon Hoare as the designer. From GitHub, it found the star count of 112k stars (100k+). From rust-lang.org, it retrieved the exact tagline 'A language empowering everyone to build reliable and efficient software.' All three sites were visited and all answers are correct and complete.",
+  "details": "The agent visited all three sites using browser automation tools, and correctly reported: (1) Graydon Hoare as the designer of Rust from Wikipedia, (2) 112k stars from GitHub (which is 100k+), and (3) the exact tagline 'A language empowering everyone to build reliable and efficient software.' from rust-lang.org. All three pieces of information match the known facts.",
   "judge_model": "claude-sonnet-4-6"
 }

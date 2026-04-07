@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/torvalds/linux, then to the Makefile at https://github.com/torvalds/linux/blob/master/Makefile, and read the actual content via browser automation. The snapshot clearly shows VERSION = 7 and PATCHLEVEL = 0, which the agent correctly reported.",
+  "details": "The agent successfully navigated to the Linux repository on GitHub, then accessed the raw Makefile content and correctly read VERSION = 7 and PATCHLEVEL = 0 from the actual file content. The agent did not hallucinate — the raw file output is clearly shown in the trajectory confirming these values.",
   "judge_model": "claude-sonnet-4-6"
 }

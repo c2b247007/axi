@@ -92,8 +92,14 @@ conditions:
           import { navigatePage, takeSnapshot } from "./servers/chrome-devtools/index.js";
 
           const page = await navigatePage({ url: "https://example.com" });
-          const snap = await takeSnapshot();
+          const snap = await takeSnapshot({});
           console.log(snap);
+
+      `takeSnapshot` accepts an optional input object, so prefer `takeSnapshot({})`
+      when you do not need any options.
+
+      `evaluateScript` expects a `function` string, and also accepts a `script`
+      alias for convenience.
 
       IMPORTANT: Do NOT use `curl`, `wget`, or WebFetch.
       You must use the `./servers/chrome-devtools/` wrappers exclusively.
@@ -117,7 +123,8 @@ conditions:
       level: medium
       server_name: chrome-devtools
       cli_mode: true
-      backend_command: ["npx", "-y", "chrome-devtools-mcp@latest", "--headless", "--isolated"]
+      backend_command:
+        ["npx", "-y", "chrome-devtools-mcp@latest", "--headless", "--isolated"]
     command_policy:
       require_any_prefix: ["chrome-devtools"]
       forbid_any_prefix:

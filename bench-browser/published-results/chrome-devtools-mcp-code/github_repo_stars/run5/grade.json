@@ -1,5 +1,5 @@
 {
   "task_success": true,
-  "details": "The agent successfully navigated to https://github.com/torvalds/linux using browser automation, retrieved the actual page content via snapshot, and correctly reported ~227k stars (consistent with 190k+ known facts) and C as the primary programming language.",
+  "details": "The agent navigated to https://github.com/torvalds/linux, extracted the star count (227k, which is in the hundreds of thousands and consistent with 190k+ range for the repo at time of access), and correctly identified C as the primary programming language at 98.0%.",
   "judge_model": "claude-sonnet-4-6"
 }

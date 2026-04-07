@@ -134,47 +134,50 @@
                 <div class="chart-bar-track">
                   <div class="chart-bar" style="width: 100%"></div>
                 </div>
-                <span class="chart-value">$0.162</span>
+                <span class="chart-value">$0.120</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 62%"></div>
+                  <div class="chart-bar" style="width: 84%"></div>
                 </div>
                 <span class="chart-value">$0.100</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp-search</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 59%"></div>
+                  <div class="chart-bar" style="width: 79.8%"></div>
                 </div>
                 <span class="chart-value">$0.096</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp-compressed</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 56%"></div>
+                  <div class="chart-bar" style="width: 76.2%"></div>
                 </div>
                 <span class="chart-value">$0.091</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">agent-browser</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 54%"></div>
+                  <div class="chart-bar" style="width: 73.5%"></div>
                 </div>
                 <span class="chart-value">$0.088</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">dev-browser</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 48%"></div>
+                  <div class="chart-bar" style="width: 65.1%"></div>
                 </div>
                 <span class="chart-value">$0.078</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-axi</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar bar-highlight" style="width: 46%"></div>
+                  <div
+                    class="chart-bar bar-highlight"
+                    style="width: 62.2%"
+                  ></div>
                 </div>
                 <span class="chart-value value-highlight">$0.074</span>
               </div>
@@ -188,47 +191,50 @@
                 <div class="chart-bar-track">
                   <div class="chart-bar" style="width: 100%"></div>
                 </div>
-                <span class="chart-value">49.4s</span>
+                <span class="chart-value">36.2s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp-compressed</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 60%"></div>
+                  <div class="chart-bar" style="width: 82%"></div>
                 </div>
                 <span class="chart-value">29.7s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp-search</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 60%"></div>
+                  <div class="chart-bar" style="width: 81.2%"></div>
                 </div>
                 <span class="chart-value">29.4s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">dev-browser</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 58%"></div>
+                  <div class="chart-bar" style="width: 79%"></div>
                 </div>
                 <span class="chart-value">28.6s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-mcp</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 53%"></div>
+                  <div class="chart-bar" style="width: 71.8%"></div>
                 </div>
                 <span class="chart-value">26.0s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">agent-browser</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar" style="width: 50%"></div>
+                  <div class="chart-bar" style="width: 68%"></div>
                 </div>
                 <span class="chart-value">24.6s</span>
               </div>
               <div class="chart-row">
                 <span class="chart-label">chrome-devtools-axi</span>
                 <div class="chart-bar-track">
-                  <div class="chart-bar bar-highlight" style="width: 44%"></div>
+                  <div
+                    class="chart-bar bar-highlight"
+                    style="width: 59.4%"
+                  ></div>
                 </div>
                 <span class="chart-value value-highlight">21.5s</span>
               </div>
@@ -401,7 +407,7 @@
           writing TypeScript than when making direct tool calls. The code-mode
           condition in our browser benchmark evaluates this approach. Code
           execution achieves 100% reliability, but write-run-debug loops make it
-          the slowest condition (49.4s avg) and, at $0.162/task, the most
+          the slowest condition (36.2s avg) and, at $0.120/task, the most
           expensive condition. In a
           <a
             href="https://github.com/kunchenguid/axi/blob/main/bench-github/published-results/STUDY.md"
@@ -848,9 +854,9 @@ help[2]:
                 <tr>
                   <td>chrome-devtools-mcp-code</td>
                   <td>100%</td>
-                  <td>$0.162</td>
-                  <td>49.4s</td>
-                  <td>11.7</td>
+                  <td>$0.120</td>
+                  <td>36.2s</td>
+                  <td>6.4</td>
                 </tr>
               </tbody>
             </table>
@@ -912,8 +918,8 @@ help[2]:
               AXI&rsquo;s <code>tables --url</code> command navigates to a page
               and returns structured table data in a single step. On extraction
               tasks, this reduces the entire interaction to 2 turns at
-              $0.047/task &mdash; a 3.4&times; cost reduction vs. MCP-code on
-              the same tasks ($0.162).
+              $0.047/task &mdash; a 3.1&times; cost reduction vs. MCP-code on
+              the same task ($0.147).
             </li>
             <li>
               <strong>Pipe-based filtering.</strong>
@@ -935,12 +941,12 @@ help[2]:
 
         <div class="card mt-md">
           <p class="section-label">Finding 2</p>
-          <h4>Code-writing achieves reliability at a steep cost.</h4>
+          <h4>Code-writing pays a coordination tax.</h4>
           <p>
             Both code-writing conditions achieve near-perfect success:
             <code>chrome-devtools-mcp-code</code> at 100% and
             <code>dev-browser</code> at 99%. MCP-code&rsquo;s perfect
-            reliability comes at $0.162/task and 11.7 turns &mdash; 2.2&times;
+            reliability comes at $0.120/task and 6.4 turns &mdash; 1.6&times;
             AXI&rsquo;s cost. <code>dev-browser</code> is more competitive at
             $0.078 and 4.9 turns, occasionally beating AXI on multi-site tasks
             where script batching eliminates sequential navigation.
@@ -985,7 +991,7 @@ help[2]:
         <p class="section-label">Case Studies</p>
         <h2>Trajectory analysis.</h2>
 
-        <h3>Case A: Specialized extraction &mdash; from 13 turns to 2</h3>
+        <h3>Case A: Specialized extraction &mdash; from 11 turns to 2</h3>
         <p class="text-muted">
           <code>wikipedia_deep_extraction</code> &mdash; Navigate to the
           Wikipedia list of Nobel laureates in Physics and report the winners
@@ -1012,44 +1018,37 @@ responds with all co-laureates for
           </div>
           <div class="card">
             <p class="section-label">
-              chrome-devtools-mcp-code &mdash; 13 turns &middot; $0.224
+              chrome-devtools-mcp-code &mdash; 11 turns &middot; $0.194
             </p>
-            <pre><code><span class="annotation">Turn 1: Glob servers/chrome-devtools/*.ts
-  &rarr; Discover available tool wrappers.</span>
+            <pre><code><span class="annotation">Turn 1: Write + run get_nobel.ts
+  &rarr; Navigate and dump the raw snapshot.</span>
 
-<span class="annotation">Turns 2&ndash;3: Read interface files
-  &rarr; Learn navigatePage, takeSnapshot,
-  evaluateScript parameter types.</span>
+<span class="annotation">Turns 2&ndash;4: Write + run probing scripts
+  &rarr; Identify the recent-year rows and
+  inspect the table structure.</span>
 
-<span class="annotation">Turn 4: Write + run fetch_nobel.ts
-  &rarr; Script fails (wrong parameter).</span>
+<span class="annotation">Turns 5&ndash;10: Refine extraction logic
+  &rarr; Track rowspans, filter non-person
+  links, and verify co-laureates.</span>
 
-<span class="annotation">Turn 5: Write + run fetch_nobel2.ts
-  &rarr; Partial extraction, misses
-  co-laureates in continuation rows.</span>
-
-<span class="annotation">Turns 6&ndash;12: Write + run scripts 3&ndash;4
-  &rarr; Refine DOM selectors, handle
-  rowspan propagation, retry.</span>
-
-<span class="annotation">Turn 13: Final extraction succeeds.
-  Total time: 65.1s.</span></code></pre>
+<span class="annotation">Turn 11: Final extraction succeeds.
+  Total time: 58.6s.</span></code></pre>
           </div>
         </div>
         <p class="mt-md">
           AXI&rsquo;s <code>tables --url</code> command navigates, extracts, and
           structures table data in a single operation. The MCP-code agent
           follows a fundamentally different path: discover tool interfaces, read
-          type signatures, write TypeScript, handle parameter mismatches, fix
-          extraction logic for continuation rows &mdash; 13 turns and 4 script
-          iterations to arrive at the same answer. Across all 5 runs, MCP-code
-          costs $0.181&ndash;$0.252 (11&ndash;17 turns) vs. AXI&rsquo;s
-          consistent $0.047 (2 turns).
+          type signatures, write TypeScript, inspect the rendered table, and
+          refine extraction logic for continuation rows &mdash; 11 turns and
+          multiple script iterations to arrive at the same answer. Across all 5
+          runs, MCP-code costs $0.103&ndash;$0.194 (4&ndash;11 turns) vs.
+          AXI&rsquo;s consistent $0.047 (2 turns).
         </p>
 
         <hr class="divider" />
 
-        <h3>Case B: Combined operations collapse a 20-turn workflow to 5</h3>
+        <h3>Case B: Combined operations still beat a 7-turn script loop</h3>
         <p class="text-muted">
           <code>wikipedia_search_click</code> &mdash; Go to Wikipedia, search
           for &ldquo;Turing Award&rdquo;, and report who the first recipient
@@ -1088,25 +1087,23 @@ $ chrome-devtools-axi fill @1_11 \
           </div>
           <div class="card">
             <p class="section-label">
-              chrome-devtools-mcp-code &mdash; 20 turns &middot; $0.261
+              chrome-devtools-mcp-code &mdash; 7 turns &middot; $0.132
             </p>
-            <pre><code><span class="annotation">Turns 1&ndash;5: Glob for tool wrappers,
-  read interface files, learn
-  navigatePage / fill / click types.</span>
+            <pre><code><span class="annotation">Turns 1&ndash;2: Write + run script
+  &rarr; Navigate to Wikipedia and capture
+  the main-page snapshot.</span>
 
-<span class="annotation">Turns 6&ndash;8: Write TypeScript script.
-  &rarr; TypeError on first run &mdash;
-  wrong parameter name for fill().</span>
+<span class="annotation">Turn 3: Write follow-up script
+  &rarr; First attempt fails after guessing
+  the wrong wrapper export name.</span>
 
-<span class="annotation">Turns 9&ndash;15: Fix parameter errors,
-  add separate snapshot calls,
-  coordinate fill &rarr; click &rarr; wait
-  &rarr; snapshot sequence manually.</span>
+<span class="annotation">Turns 4&ndash;6: Read generated exports,
+  rewrite with click() + pressKey(),
+  and rerun the search sequence.</span>
 
-<span class="annotation">Turns 16&ndash;20: Final extraction.
-  Agent pieces together results
-  across multiple script outputs.
-  &rarr; "Alan Perlis". Done.</span></code></pre>
+<span class="annotation">Turn 7: Final extraction.
+  The Turing Award article states the
+  first recipient was Alan Perlis.</span></code></pre>
           </div>
         </div>
         <p class="mt-md">
@@ -1114,11 +1111,12 @@ $ chrome-devtools-axi fill @1_11 \
           <code>fill @1_11 &quot;Turing Award&quot; --submit</code>. This single
           invocation fills the search box, submits the form, waits for the
           results page, and returns the snapshot &mdash; four operations in one
-          step. The MCP-code agent must orchestrate these as separate calls
-          (<code>fill()</code>, <code>click()</code>,
-          <code>takeSnapshot()</code>), each requiring correct parameters and
-          error handling. The coordination overhead produced 15 extra turns of
-          debugging. This is
+          step. The MCP-code agent still has to orchestrate these as separate
+          wrapper calls (<code>click()</code>, <code>typeText()</code>,
+          <code>pressKey()</code>, <code>takeSnapshot()</code>), and it spent
+          extra turns confirming the generated export names before the sequence
+          ran cleanly. Across the rerun, the task ranged from $0.132 to $0.316
+          (7&ndash;18 turns). This is
           <strong>Principle 4 (pre-computed aggregates)</strong> applied to
           actions: the tool does the multi-step work so the agent doesn&rsquo;t
           have to.

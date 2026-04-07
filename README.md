@@ -30,7 +30,7 @@ Evaluated across 490 runs (14 tasks × 7 conditions × 5 repeats) using Claude S
 | chrome-devtools-mcp-compressed | 100%     | $0.091     | 29.7s        | 7.6       |
 | chrome-devtools-mcp-search     | 99%      | $0.096     | 29.4s        | 7.5       |
 | chrome-devtools-mcp            | 99%      | $0.101     | 26.0s        | 6.2       |
-| chrome-devtools-mcp-code       | 100%     | $0.162     | 49.4s        | 11.7      |
+| chrome-devtools-mcp-code       | 100%     | $0.120     | 36.2s        | 6.4       |
 
 ### GitHub Benchmark
 
