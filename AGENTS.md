@@ -37,6 +37,13 @@ npm run bench -- report
 npm test           # Run bench tests (vitest)
 ```
 
+### Social video rendering
+
+```sh
+cd bench-browser
+npm run render:social -- --skip-gif   # Render docs/social/race.html to a timestamped MP4 in docs/social/rendered/
+```
+
 Requires Node.js >= 20 and `gh` CLI installed and authenticated.
 
 ## Architecture
